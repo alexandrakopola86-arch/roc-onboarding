@@ -154,7 +154,11 @@ export default function Home() {
 
       <div className="wrap">
         <div className="header">
-          <img src="/logo.jpg" alt="Roots of Carbon" style={{width:"auto",height:"100%",objectFit:"cover",objectPosition:"0% center",transform:"scale(1.9) translateX(-28%)"}} />
+          <svg viewBox="0 0 100 100" width="44" height="44" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="50" cy="50" r="45" fill="none" stroke="#1a1a1a" strokeWidth="8" strokeDasharray="6 3"/>
+  <ellipse cx="44" cy="54" rx="14" ry="20" fill="#5a9e3a" transform="rotate(-15 44 54)"/>
+  <ellipse cx="56" cy="52" rx="11" ry="17" fill="#2d6e18" transform="rotate(10 56 52)"/>
+</svg>
           <div>
             <h1>Roots of Carbon</h1>
             <p>Αρχική καταγραφή ενδιαφέροντος</p>
