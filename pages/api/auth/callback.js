@@ -1,33 +1,71 @@
-import axios from 'axios';
-
 export default async function handler(req, res) {
-  const { code } = req.query;
-
+  const code = req.query.code;
+  
   if (!code) {
-    return res.status(400).json({ error: 'No code provided' });
+    return res.status(400).json({ error: 'No code provided', query: req.query });
   }
 
   try {
-    const response = await axios.post('https://accounts.zoho.eu/oauth/v2/token', null, {
-      params: {
-        code,
-        client_id: process.env.ZOHO_CLIENT_ID,
-        client_secret: process.env.ZOHO_CLIENT_SECRET,
-        redirect_uri: 'https://roc-onboarding.vercel.app/api/auth/callback',
-        grant_type: 'authorization_code',
-      },
+    const params = new URLSearchParams({
+      code,
+      client_id: process.env.ZOHO_CLIENT_ID,
+      client_secret: process.env.ZOHO_CLIENT_SECRET,
+      redirect_uri: 'https://roc-onboarding.vercel.app/api/auth/callback',
+      grant_type: 'authorization_code',
     });
 
-    const { refresh_token, access_token } = response.data;
+    const response = await fetch('https://accounts.zoho.eu/oauth/v2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
 
-    console.log('=== ZOHO TOKENS ===');
-    console.log('Refresh Token:', refresh_token);
-    console.log('Access Token:', access_token);
-    console.log('===================');
+    const data = await response.json();
+    console.log('ZOHO RESPONSE:', JSON.stringify(data));
 
-    return res.redirect('/auth/callback?success=true&refresh_token=' + refresh_token);
+    if (data.refresh_token) {
+      return res.status(200).send(`
+        <h2>✅ Επιτυχία!</h2>
+        <p><strong>Refresh Token:</strong></p>
+        <textarea rows="3" style="width:100%">${data.refresh_token}</textarea>
+        <p>Αντιγράψτε αυτό το token και κλείστε τη σελίδα.</p>
+cat > pages/api/auth/callback.js << 'EOF'
+export default async function handler(req, res) {
+  const code = req.query.code;
+  
+  if (!code) {
+    return res.status(400).json({ error: 'No code provided', query: req.query });
+  }
+
+  try {
+    const params = new URLSearchParams({
+      code,
+      client_id: process.env.ZOHO_CLIENT_ID,
+      client_secret: process.env.ZOHO_CLIENT_SECRET,
+      redirect_uri: 'https://roc-onboarding.vercel.app/api/auth/callback',
+      grant_type: 'authorization_code',
+    });
+
+    const response = await fetch('https://accounts.zoho.eu/oauth/v2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    const data = await response.json();
+    console.log('ZOHO RESPONSE:', JSON.stringify(data));
+
+    if (data.refresh_token) {
+      return res.status(200).send(`
+        <h2>✅ Επιτυχία!</h2>
+        <p><strong>Refresh Token:</strong></p>
+        <textarea rows="3" style="width:100%">${data.refresh_token}</textarea>
+        <p>Αντιγράψτε αυτό το token και κλείστε τη σελίδα.</p>
+      `);
+    } else {
+      return res.status(200).json(data);
+    }
   } catch (error) {
-    console.error('OAuth error:', error?.response?.data || error.message);
-    return res.status(500).json({ error: 'OAuth failed', details: error?.response?.data });
+    return res.status(500).json({ error: error.message });
   }
 }
