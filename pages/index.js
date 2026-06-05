@@ -154,7 +154,7 @@ export default function Home() {
 
       <div className="wrap">
         <div className="header">
-          <img src="/logo.jpg" alt="Roots of Carbon" style={{width:"100%",height:"100%",objectFit:"contain"}} />
+          <img src="/logo.jpg" alt="Roots of Carbon" style={{width:"auto",height:"100%",objectFit:"cover",objectPosition:"0% center",transform:"scale(1.9) translateX(-28%)"}} />
           <div>
             <h1>Roots of Carbon</h1>
             <p>Αρχική καταγραφή ενδιαφέροντος</p>
