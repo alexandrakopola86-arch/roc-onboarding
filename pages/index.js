@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import Head from 'next/head';
 
-// ============================================================
-// CONSTANTS
-// ============================================================
 const YEARS = [2021, 2022, 2023, 2024, 2025];
 const MONTHS = ['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
 const CROPS_LIST = ['Ελιά ελαιοποιήσιμη','Ελιά επιτραπέζια','Βαμβάκι','Μαλακό σιτάρι','Σκληρό σιτάρι','Κριθάρι','Αραβόσιτος','Βρώμη','Λούπινο','Ηλίανθος','Σόγια','Σουσάμι','Βίκος','Κουκί','Αγρανάπαυση','Πράσινο ακτινίδιο','Αμπέλι','Εσπεριδοειδή','Κηπευτικά','Άλλο','Καμία'];
@@ -16,36 +13,52 @@ const EQUIPMENT_SCHEMAS = {
     { key: 'year_built', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2005' },
     { key: 'hp', label: 'Ιπποδύναμη (HP)', type: 'number', placeholder: 'π.χ. 120' },
     { key: 'fuel', label: 'Τύπος καυσίμου', type: 'select', options: ['Πετρέλαιο','Βενζίνη','Biodiesel'] },
+    { key: 'renewal', label: 'Πρόθεση ανανέωσης', type: 'select', options: ['Ναι, άμεσα','Ναι, μελλοντικά','Όχι'] },
+    { key: 'maintenance', label: 'Επίπεδο συντήρησης', type: 'select', options: ['Τακτική','Περιστασιακή','Καμία'] },
   ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'fuel_lt', label: 'Κατανάλωση καυσίμου (λίτρα)' }] },
   'Άροτρο': { icon: '🌾', fields: [
     { key: 'type', label: 'Τύπος', type: 'select', options: ['Αναστρεφόμενο','Δίυνο','Τρίυνο','Πολύυνο'] },
     { key: 'width', label: 'Πλάτος εργασίας (μ)', type: 'number', placeholder: 'π.χ. 1.5' },
+    { key: 'renewal', label: 'Πρόθεση ανανέωσης', type: 'select', options: ['Ναι, άμεσα','Ναι, μελλοντικά','Όχι'] },
+    { key: 'maintenance', label: 'Επίπεδο συντήρησης', type: 'select', options: ['Τακτική','Περιστασιακή','Καμία'] },
   ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
   'Καλλιεργητής': { icon: '⚙️', fields: [
     { key: 'type', label: 'Τύπος', type: 'select', options: ['Με ελατήρια','Βαρέως τύπου','Ρίπερ'] },
     { key: 'bodies', label: 'Αριθμός σωμάτων', type: 'number', placeholder: 'π.χ. 9' },
     { key: 'width', label: 'Πλάτος εργασίας (μ)', type: 'number', placeholder: 'π.χ. 2.5' },
+    { key: 'renewal', label: 'Πρόθεση ανανέωσης', type: 'select', options: ['Ναι, άμεσα','Ναι, μελλοντικά','Όχι'] },
+    { key: 'maintenance', label: 'Επίπεδο συντήρησης', type: 'select', options: ['Τακτική','Περιστασιακή','Καμία'] },
   ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
   'Φρέζα': { icon: '🔄', fields: [
     { key: 'type', label: 'Τύπος', type: 'select', options: ['Σταθερή','Μετατοπιζόμενη'] },
     { key: 'width', label: 'Πλάτος εργασίας (μ)', type: 'number', placeholder: 'π.χ. 1.8' },
+    { key: 'renewal', label: 'Πρόθεση ανανέωσης', type: 'select', options: ['Ναι, άμεσα','Ναι, μελλοντικά','Όχι'] },
+    { key: 'maintenance', label: 'Επίπεδο συντήρησης', type: 'select', options: ['Τακτική','Περιστασιακή','Καμία'] },
   ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
   'Καταστροφέας': { icon: '✂️', fields: [
     { key: 'type', label: 'Τύπος', type: 'select', options: ['Σφυριά','Μαχαίρια'] },
     { key: 'width', label: 'Πλάτος εργασίας (μ)', type: 'number', placeholder: 'π.χ. 2.0' },
+    { key: 'renewal', label: 'Πρόθεση ανανέωσης', type: 'select', options: ['Ναι, άμεσα','Ναι, μελλοντικά','Όχι'] },
+    { key: 'maintenance', label: 'Επίπεδο συντήρησης', type: 'select', options: ['Τακτική','Περιστασιακή','Καμία'] },
   ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
   'Λιπασματοδιανομέας': { icon: '📦', fields: [
     { key: 'type', label: 'Τύπος', type: 'select', options: ['Μονός δίσκος','Διπλός δίσκος','Συρόμενος'] },
     { key: 'capacity', label: 'Χωρητικότητα (λίτρα)', type: 'number', placeholder: 'π.χ. 500' },
+    { key: 'renewal', label: 'Πρόθεση ανανέωσης', type: 'select', options: ['Ναι, άμεσα','Ναι, μελλοντικά','Όχι'] },
+    { key: 'maintenance', label: 'Επίπεδο συντήρησης', type: 'select', options: ['Τακτική','Περιστασιακή','Καμία'] },
   ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
   'Ψεκαστικό': { icon: '💧', fields: [
     { key: 'type', label: 'Τύπος', type: 'select', options: ['Νεφελοψεκαστήρας για δέντρα','Ψεκαστικό μπάρας','Νεφελοψεκαστήρας'] },
     { key: 'capacity', label: 'Χωρητικότητα (λίτρα)', type: 'number', placeholder: 'π.χ. 1000' },
     { key: 'tow', label: 'Τρόπος ρυμούλκησης', type: 'select', options: ['Συρόμενο','Αναρτόμενο'] },
+    { key: 'renewal', label: 'Πρόθεση ανανέωσης', type: 'select', options: ['Ναι, άμεσα','Ναι, μελλοντικά','Όχι'] },
+    { key: 'maintenance', label: 'Επίπεδο συντήρησης', type: 'select', options: ['Τακτική','Περιστασιακή','Καμία'] },
   ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
   'Άλλος εξοπλισμός': { icon: '🔧', fields: [
     { key: 'type', label: 'Είδος εξοπλισμού', type: 'text', placeholder: 'π.χ. Μπαλιαστικό' },
     { key: 'hp', label: 'Ιπποδύναμη (HP)', type: 'number', placeholder: 'π.χ. 80' },
+    { key: 'renewal', label: 'Πρόθεση ανανέωσης', type: 'select', options: ['Ναι, άμεσα','Ναι, μελλοντικά','Όχι'] },
+    { key: 'maintenance', label: 'Επίπεδο συντήρησης', type: 'select', options: ['Τακτική','Περιστασιακή','Καμία'] },
   ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
 };
 const FIELD_SECTIONS = [
@@ -58,35 +71,25 @@ const FIELD_SECTIONS = [
   { key: 'fertilizer_org', label: 'Λιπάσματα Οργανικά', icon: '🌿' },
 ];
 const TILLAGE_TYPES = ['Βαθιά άροση','Ελαφρά κατεργασία','Φρεζάρισμα','Καλλιέργεια','Χωρίς κατεργασία','Ελάχιστη κατεργασία'];
+const SOIL_TYPES = ['Αμμώδες','Αργιλώδες','Πηλώδες','Αμμοπηλώδες','Αργιλοπηλώδες'];
 
-// ============================================================
-// MAIN COMPONENT
-// ============================================================
 export default function Home() {
-  // PHASE: 'onboarding' | 'equipment' | 'fields' | 'done'
   const [phase, setPhase] = useState('onboarding');
-
-  // ONBOARDING STATE
   const [onbStep, setOnbStep] = useState(1);
   const [onbErrors, setOnbErrors] = useState({});
   const [onb, setOnb] = useState({
     type: '', firstName: '', lastName: '', email: '', phone: '', orgName: '',
     region: '', hectares: '', plots: '', crops: [], equipment: [],
     agronomist: '', source: '', comments: '',
+    farm_size: '', carbon_measured: '', motivation: '',
   });
-
-  // EQUIPMENT STATE
   const [activeEquip, setActiveEquip] = useState(null);
   const [equipData, setEquipData] = useState({});
-
-  // FIELDS STATE
   const [activePlot, setActivePlot] = useState(1);
   const [activeFieldSection, setActiveFieldSection] = useState('info');
   const [fieldData, setFieldData] = useState({});
-
   const [loading, setLoading] = useState(false);
 
-  // ── helpers ──
   const setOnbField = (k, v) => setOnb(p => ({ ...p, [k]: v }));
   const toggleArr = (k, v) => setOnb(p => ({ ...p, [k]: p[k].includes(v) ? p[k].filter(x => x !== v) : [...p[k], v] }));
   const setEq = (eq, f, v) => setEquipData(p => ({ ...p, [eq]: { ...p[eq], [f]: v } }));
@@ -95,15 +98,20 @@ export default function Home() {
   const setFldY = (plot, sec, yr, f, v) => setFieldData(p => ({ ...p, [`p${plot}`]: { ...p[`p${plot}`], [sec]: { ...p[`p${plot}`]?.[sec], [yr]: { ...p[`p${plot}`]?.[sec]?.[yr], [f]: v } } } }));
   const fv = (plot, sec, f) => fieldData[`p${plot}`]?.[sec]?.[f] || '';
   const fyv = (plot, sec, yr, f) => fieldData[`p${plot}`]?.[sec]?.[yr]?.[f] || '';
-
   const numPlots = parseInt(onb.plots) || 1;
   const activeEquipList = onb.equipment.filter(e => EQUIPMENT_SCHEMAS[e]);
 
-  // ── onboarding validation ──
+  const ONB_TOTAL = 9;
+
   const validateOnb = (step) => {
     const e = {};
     if (step === 1 && !onb.type) e.type = true;
-    if (step === 2) { if (!onb.firstName) e.firstName = true; if (!onb.lastName) e.lastName = true; if (!onb.email || !/\S+@\S+/.test(onb.email)) e.email = true; }
+    if (step === 2) {
+      if (!onb.firstName) e.firstName = true;
+      if (!onb.lastName) e.lastName = true;
+      if (!onb.email || !/\S+@\S+/.test(onb.email)) e.email = true;
+      if (!onb.phone) e.phone = true;
+    }
     if (step === 3) { if (!onb.region) e.region = true; if (!onb.hectares) e.hectares = true; if (!onb.plots) e.plots = true; }
     if (step === 4 && onb.crops.length === 0) e.crops = true;
     setOnbErrors(e);
@@ -112,9 +120,8 @@ export default function Home() {
 
   const nextOnbStep = () => {
     if (!validateOnb(onbStep)) return;
-    if (onbStep < 7) { setOnbStep(s => s + 1); }
+    if (onbStep < ONB_TOTAL) { setOnbStep(s => s + 1); }
     else {
-      // submit onboarding and go to equipment
       if (activeEquipList.length > 0) { setActiveEquip(activeEquipList[0]); setPhase('equipment'); }
       else { setPhase('fields'); }
     }
@@ -129,11 +136,8 @@ export default function Home() {
     setLoading(false);
   };
 
-  const onbProgress = Math.round((onbStep / 7) * 100);
+  const onbProgress = Math.round((onbStep / ONB_TOTAL) * 100);
 
-  // ============================================================
-  // RENDER
-  // ============================================================
   return (
     <>
       <Head>
@@ -146,7 +150,8 @@ export default function Home() {
         body{font-family:'Inter',sans-serif;background:#f4f7f4;min-height:100vh;padding:2rem 1rem}
         .wrap{max-width:620px;margin:0 auto}
         .header{background:#1a3d2b;border-radius:12px;padding:1.5rem 2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem}
-        .logo{width:48px;height:48px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+        .logo-wrap{width:52px;height:52px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;padding:6px}
+        .logo-wrap img{width:100%;height:100%;object-fit:contain}
         .header h1{color:white;font-size:18px;font-weight:600}
         .header p{color:rgba(255,255,255,0.65);font-size:13px;margin-top:2px}
         .phase-bar{display:flex;gap:0;margin-bottom:1.5rem;border-radius:99px;overflow:hidden;border:1px solid #d0d8cc}
@@ -208,7 +213,6 @@ export default function Home() {
         .btn-next:disabled{opacity:0.5;cursor:not-allowed}
         .hint{font-size:12px;color:#888;margin-top:4px}
         .required{color:#4a8c2a}
-        .success-icon{font-size:52px;margin-bottom:1rem}
         .summary{background:#f4f7f4;border-radius:8px;padding:1rem 1.25rem;margin-top:1.5rem}
         .sum-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e0e8d8;gap:12px;font-size:13px}
         .sum-row:last-child{border-bottom:none}
@@ -218,7 +222,9 @@ export default function Home() {
 
       <div className="wrap">
         <div className="header">
-          <div className="logo">🌱</div>
+          <div className="logo-wrap">
+            <img src="/roc_logo.jpeg" alt="Roots of Carbon logo" />
+          </div>
           <div>
             <h1>Roots of Carbon</h1>
             <p>
@@ -230,7 +236,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Phase indicator */}
         <div className="phase-bar">
           <div className={`phase-item ${phase === 'onboarding' ? 'active' : ['equipment','fields','done'].includes(phase) ? 'done' : ''}`}>1. Εγγραφή</div>
           <div className={`phase-item ${phase === 'equipment' ? 'active' : ['fields','done'].includes(phase) ? 'done' : ''}`}>2. Εξοπλισμός</div>
@@ -240,12 +245,12 @@ export default function Home() {
         {/* ====== ONBOARDING ====== */}
         {phase === 'onboarding' && (
           <>
-            <div className="prog-label">Βήμα {onbStep} από 7</div>
+            <div className="prog-label">Βήμα {onbStep} από {ONB_TOTAL}</div>
             <div className="prog-bar"><div className="prog-fill" style={{ width: onbProgress + '%' }} /></div>
             <div className="card">
               {onbStep === 1 && (
                 <>
-                  <div className="step-title">Τύπος οντότητας</div>
+                  <div className="step-title">Ποιός είστε;</div>
                   <div className="step-sub">Παρακαλούμε επιλέξτε τον τύπο που σας εκπροσωπεί.</div>
                   <div className="type-grid">
                     {[{v:'Μεμονωμένος αγρότης',i:'🧑‍🌾',n:'Αγρότης',d:'Μεμονωμένος παραγωγός'},{v:'Αγροτικός συνεταιρισμός',i:'🤝',n:'Συνεταιρισμός',d:'Αγροτική ένωση'},{v:'Εταιρεία',i:'🏢',n:'Εταιρεία',d:'Νομικό πρόσωπο'}].map(t => (
@@ -266,7 +271,7 @@ export default function Home() {
                     <div className="field"><label>Επώνυμο <span className="required">*</span></label><input className={onbErrors.lastName ? 'err' : ''} value={onb.lastName} onChange={e => setOnbField('lastName', e.target.value)} placeholder="π.χ. Παπαδόπουλος" /></div>
                   </div>
                   <div className="field"><label>Διεύθυνση email <span className="required">*</span></label><input className={onbErrors.email ? 'err' : ''} type="email" value={onb.email} onChange={e => setOnbField('email', e.target.value)} placeholder="email@example.com" />{onbErrors.email && <div className="err-msg">Εισάγετε έγκυρη διεύθυνση email.</div>}</div>
-                  <div className="field"><label>Τηλέφωνο επικοινωνίας</label><input type="tel" value={onb.phone} onChange={e => setOnbField('phone', e.target.value)} placeholder="π.χ. 6901234567" /></div>
+                  <div className="field"><label>Τηλέφωνο επικοινωνίας <span className="required">*</span></label><input className={onbErrors.phone ? 'err' : ''} type="tel" value={onb.phone} onChange={e => setOnbField('phone', e.target.value)} placeholder="π.χ. 6901234567" />{onbErrors.phone && <div className="err-msg">Παρακαλούμε εισάγετε αριθμό τηλεφώνου.</div>}</div>
                   {onb.type !== 'Μεμονωμένος αγρότης' && <div className="field"><label>Επωνυμία {onb.type === 'Εταιρεία' ? 'εταιρείας' : 'συνεταιρισμού'}</label><input value={onb.orgName} onChange={e => setOnbField('orgName', e.target.value)} placeholder="π.χ. ΑΣ Οροπεδίου Φολόης" /></div>}
                 </>
               )}
@@ -311,6 +316,45 @@ export default function Home() {
               )}
               {onbStep === 6 && (
                 <>
+                  <div className="step-title">Μέγεθος εκμετάλλευσης και κίνητρο</div>
+                  <div className="step-sub">Μερικές ακόμα πληροφορίες για να σας εξυπηρετήσουμε καλύτερα.</div>
+                  <div className="field">
+                    <label>Μέγεθος γεωργικής εκμετάλλευσης</label>
+                    <div className="radio-group" style={{marginTop:'6px'}}>
+                      {['Μικρός παραγωγός (έως 10 ha)','Μεσαίος παραγωγός (10–50 ha)','Μεγάλος παραγωγός (άνω των 50 ha)'].map(o => (
+                        <div key={o} className={`radio-item ${onb.farm_size === o ? 'sel' : ''}`} onClick={() => setOnbField('farm_size', o)}>
+                          <div className="radio-dot"><div className="radio-inner" /></div><span>{o}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="field" style={{marginTop:'1.25rem'}}>
+                    <label>Κύριο κίνητρο συμμετοχής</label>
+                    <div className="radio-group" style={{marginTop:'6px'}}>
+                      {['Carbon credits','Επιδοτήσεις','Πιστοποίηση βιώσιμης γεωργίας','Βελτίωση γεωργικών πρακτικών','Συνδυασμός των παραπάνω'].map(o => (
+                        <div key={o} className={`radio-item ${onb.motivation === o ? 'sel' : ''}`} onClick={() => setOnbField('motivation', o)}>
+                          <div className="radio-dot"><div className="radio-inner" /></div><span>{o}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+              {onbStep === 7 && (
+                <>
+                  <div className="step-title">Αποτύπωμα άνθρακα</div>
+                  <div className="step-sub">Έχετε προηγουμένως μετρήσει το αποτύπωμα άνθρακα της εκμετάλλευσής σας;</div>
+                  <div className="radio-group">
+                    {['Ναι, έχω επίσημη μέτρηση','Ναι, κατά προσέγγιση','Όχι, είναι η πρώτη φορά','Δεν γνωρίζω'].map(o => (
+                      <div key={o} className={`radio-item ${onb.carbon_measured === o ? 'sel' : ''}`} onClick={() => setOnbField('carbon_measured', o)}>
+                        <div className="radio-dot"><div className="radio-inner" /></div><span>{o}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              {onbStep === 8 && (
+                <>
                   <div className="step-title">Συνεργάτες και πηγή ενημέρωσης</div>
                   <div className="step-sub">Οι πληροφορίες αυτές μας βοηθούν να κατανοήσουμε καλύτερα τις ανάγκες σας.</div>
                   <div className="field">
@@ -335,7 +379,7 @@ export default function Home() {
                   </div>
                 </>
               )}
-              {onbStep === 7 && (
+              {onbStep === 9 && (
                 <>
                   <div className="step-title">Πρόσθετες πληροφορίες</div>
                   <div className="step-sub">Εάν επιθυμείτε, μπορείτε να προσθέσετε οποιαδήποτε πρόσθετη πληροφορία.</div>
@@ -345,7 +389,7 @@ export default function Home() {
               <div className="nav">
                 {onbStep > 1 && <button className="btn-back" onClick={() => setOnbStep(s => s - 1)}>← Προηγούμενο</button>}
                 <button className="btn-next" onClick={nextOnbStep}>
-                  {onbStep === 7 ? (activeEquipList.length > 0 ? 'Επόμενο: Εξοπλισμός →' : 'Επόμενο: Αγροτεμάχια →') : 'Επόμενο →'}
+                  {onbStep === ONB_TOTAL ? (activeEquipList.length > 0 ? 'Επόμενο: Εξοπλισμός →' : 'Επόμενο: Αγροτεμάχια →') : 'Επόμενο →'}
                 </button>
               </div>
             </div>
@@ -434,7 +478,11 @@ export default function Home() {
                     <div className="field"><label>Περιοχή</label><input placeholder="π.χ. Ηλεία" value={fv(activePlot,'info','region')} onChange={e => setFld(activePlot,'info','region',e.target.value)} /></div>
                     <div className="field"><label>Έκταση (ha)</label><input type="number" step="0.1" placeholder="π.χ. 5" value={fv(activePlot,'info','area')} onChange={e => setFld(activePlot,'info','area',e.target.value)} /></div>
                   </div>
-                  <div className="field"><label>Συντεταγμένες GIS</label><input placeholder="π.χ. 37°43'42.6N 21°44'10.9E" value={fv(activePlot,'info','gis')} onChange={e => setFld(activePlot,'info','gis',e.target.value)} /></div>
+                  <div className="field"><label>Συντεταγμένες GIS</label><input placeholder="π.χ. 37.7N 21.7E" value={fv(activePlot,'info','gis')} onChange={e => setFld(activePlot,'info','gis',e.target.value)} /></div>
+                  <div className="row2">
+                    <div className="field"><label>Τύπος εδάφους</label><select value={fv(activePlot,'info','soil_type')} onChange={e => setFld(activePlot,'info','soil_type',e.target.value)}><option value="">Επιλέξτε...</option>{SOIL_TYPES.map(t => <option key={t}>{t}</option>)}</select></div>
+                    <div className="field"><label>Φυτοκάλυψη χειμώνα (cover crops)</label><select value={fv(activePlot,'info','cover_crops')} onChange={e => setFld(activePlot,'info','cover_crops',e.target.value)}><option value="">Επιλέξτε...</option><option>Ναι, τακτικά</option><option>Ναι, περιστασιακά</option><option>Όχι</option></select></div>
+                  </div>
                   <div className="row3">
                     <div className="field"><label>Αρδευόμενο</label><select value={fv(activePlot,'info','irrigated')} onChange={e => setFld(activePlot,'info','irrigated',e.target.value)}><option value="">Επιλέξτε...</option><option>Ναι</option><option>Όχι</option></select></div>
                     <div className="field"><label>Έξυπνη άρδευση</label><select value={fv(activePlot,'info','smart_irr')} onChange={e => setFld(activePlot,'info','smart_irr',e.target.value)}><option value="">Επιλέξτε...</option><option>Ναι</option><option>Όχι</option></select></div>
@@ -470,9 +518,10 @@ export default function Home() {
                   {YEARS.map(yr => (
                     <div className="year-block" key={yr}>
                       <div className="year-badge">{yr}</div>
-                      <div className="row2">
+                      <div className="row3">
                         <div className="field"><label>Κύρια καλλιέργεια</label><select value={fyv(activePlot,'crops',yr,'main')} onChange={e => setFldY(activePlot,'crops',yr,'main',e.target.value)}><option value="">Επιλέξτε...</option>{CROPS_LIST.map(c => <option key={c}>{c}</option>)}</select></div>
                         <div className="field"><label>Δευτερεύουσα / Επίσπορη</label><select value={fyv(activePlot,'crops',yr,'cover')} onChange={e => setFldY(activePlot,'crops',yr,'cover',e.target.value)}><option value="">Επιλέξτε...</option>{CROPS_LIST.map(c => <option key={c}>{c}</option>)}</select></div>
+                        <div className="field"><label>Χρήση ζιζανιοκτόνων</label><select value={fyv(activePlot,'crops',yr,'herbicides')} onChange={e => setFldY(activePlot,'crops',yr,'herbicides',e.target.value)}><option value="">Επιλέξτε...</option><option>Ναι</option><option>Όχι</option><option>Μερικώς</option></select></div>
                       </div>
                     </div>
                   ))}
@@ -542,7 +591,6 @@ export default function Home() {
                   ))}
                 </>
               )}
-
               <div className="nav">
                 {FIELD_SECTIONS.findIndex(s => s.key === activeFieldSection) > 0 && (
                   <button className="btn-back" onClick={() => setActiveFieldSection(FIELD_SECTIONS[FIELD_SECTIONS.findIndex(s => s.key === activeFieldSection) - 1].key)}>← Προηγούμενο</button>
@@ -562,7 +610,7 @@ export default function Home() {
         {/* ====== DONE ====== */}
         {phase === 'done' && (
           <div className="card" style={{textAlign:'center',padding:'3rem 2rem'}}>
-            <div className="success-icon">✅</div>
+            <div style={{fontSize:'52px',marginBottom:'1rem'}}>✅</div>
             <h2 style={{color:'#1a3d2b',fontSize:'20px',marginBottom:'8px'}}>Σας ευχαριστούμε!</h2>
             <p style={{color:'#666',fontSize:'14px',lineHeight:'1.6'}}>Λάβαμε όλα τα στοιχεία σας. Θα επικοινωνήσουμε μαζί σας σύντομα.</p>
             <div className="summary">
@@ -570,9 +618,11 @@ export default function Home() {
                 ['Τύπος οντότητας', onb.type],
                 ['Ονοματεπώνυμο', onb.orgName || `${onb.firstName} ${onb.lastName}`],
                 ['Email', onb.email],
+                ['Τηλέφωνο', onb.phone],
                 ['Περιοχή', onb.region],
                 ['Έκταση', onb.hectares ? `${onb.hectares} ha · ${onb.plots} αγροτεμάχια` : '—'],
                 ['Καλλιέργειες', onb.crops.join(', ') || '—'],
+                ['Κίνητρο', onb.motivation || '—'],
                 ['Εξοπλισμός', onb.equipment.join(', ') || '—'],
               ].map(([k, v]) => (
                 <div className="sum-row" key={k}><span className="sum-k">{k}</span><span className="sum-v">{v || '—'}</span></div>
