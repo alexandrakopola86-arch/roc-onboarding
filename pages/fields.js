@@ -179,7 +179,7 @@ export default function Fields() {
               </div>
               <div className="field">
                 <label>Συντεταγμένες GIS</label>
-                <input type="text" placeholder="π.χ. 37°43'42.6\"N 21°44'10.9\"E" value={val(activePlot,'info','gis')} onChange={e => setField(activePlot,'info','gis',e.target.value)} />
+                <input type="text" placeholder="π.χ. 37N 21E" value={val(activePlot,'info','gis')} onChange={e => setField(activePlot,'info','gis',e.target.value)} />
               </div>
               <div className="row2">
                 <div className="field">
