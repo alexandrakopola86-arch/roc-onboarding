@@ -150,7 +150,7 @@ export default function Home() {
         body{font-family:'Inter',sans-serif;background:#f4f7f4;min-height:100vh;padding:2rem 1rem}
         .wrap{max-width:620px;margin:0 auto}
         .header{background:#1a3d2b;border-radius:12px;padding:1.5rem 2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem}
-        .logo-wrap{width:68px;height:68px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;padding:4px}
+        .logo-wrap{width:90px;height:90px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;padding:2px}
         .logo-wrap img{width:100%;height:100%;object-fit:contain}
         .header h1{color:white;font-size:18px;font-weight:600}
         .header p{color:rgba(255,255,255,0.65);font-size:13px;margin-top:2px}
