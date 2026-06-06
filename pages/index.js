@@ -1,371 +1,585 @@
 import { useState } from 'react';
 import Head from 'next/head';
 
-const TOTAL_STEPS = 7;
-
-const CROPS = ['Ελιά', 'Σιτηρά', 'Βαμβάκι', 'Αμπέλι', 'Οπωροφόρα', 'Αρωματικά / Βότανα', 'Κηπευτικά', 'Άλλο'];
-const EQUIPMENT = ['Ελκυστήρας', 'Άροτρο', 'Καλλιεργητής', 'Φρέζα', 'Καταστροφέας', 'Λιπασματοδιανομέας', 'Ψεκαστικό', 'Άλλος εξοπλισμός'];
+// ============================================================
+// CONSTANTS
+// ============================================================
+const YEARS = [2021, 2022, 2023, 2024, 2025];
+const MONTHS = ['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
+const CROPS_LIST = ['Ελιά ελαιοποιήσιμη','Ελιά επιτραπέζια','Βαμβάκι','Μαλακό σιτάρι','Σκληρό σιτάρι','Κριθάρι','Αραβόσιτος','Βρώμη','Λούπινο','Ηλίανθος','Σόγια','Σουσάμι','Βίκος','Κουκί','Αγρανάπαυση','Πράσινο ακτινίδιο','Αμπέλι','Εσπεριδοειδή','Κηπευτικά','Άλλο','Καμία'];
 const REGIONS = ['Αττική','Θεσσαλονίκη','Ηλεία','Λάρισα','Μαγνησία','Αχαΐα','Ηράκλειο','Δωδεκάνησα','Αιτωλοακαρνανία','Βοιωτία','Εύβοια','Φθιώτιδα','Κορινθία','Αρκαδία','Μεσσηνία','Λακωνία','Αργολίδα','Χαλκιδική','Σέρρες','Κιλκίς','Πέλλα','Ημαθία','Πιερία','Κοζάνη','Φλώρινα','Καστοριά','Γρεβενά','Ιωάννινα','Θεσπρωτία','Άρτα','Πρέβεζα','Καρδίτσα','Τρίκαλα','Άλλο'];
+const ONBOARDING_CROPS = ['Ελιά','Σιτηρά','Βαμβάκι','Αμπέλι','Οπωροφόρα','Αρωματικά / Βότανα','Κηπευτικά','Άλλο'];
+const EQUIPMENT_LIST = ['Ελκυστήρας','Άροτρο','Καλλιεργητής','Φρέζα','Καταστροφέας','Λιπασματοδιανομέας','Ψεκαστικό','Άλλος εξοπλισμός'];
+const EQUIPMENT_SCHEMAS = {
+  'Ελκυστήρας': { icon: '🚜', fields: [
+    { key: 'type', label: 'Τύπος', type: 'select', options: ['Δενδροκομικό','Αροτραίων','Αμπελουργικό','Γενικής χρήσης'] },
+    { key: 'year_built', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2005' },
+    { key: 'hp', label: 'Ιπποδύναμη (HP)', type: 'number', placeholder: 'π.χ. 120' },
+    { key: 'fuel', label: 'Τύπος καυσίμου', type: 'select', options: ['Πετρέλαιο','Βενζίνη','Biodiesel'] },
+  ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'fuel_lt', label: 'Κατανάλωση καυσίμου (λίτρα)' }] },
+  'Άροτρο': { icon: '🌾', fields: [
+    { key: 'type', label: 'Τύπος', type: 'select', options: ['Αναστρεφόμενο','Δίυνο','Τρίυνο','Πολύυνο'] },
+    { key: 'width', label: 'Πλάτος εργασίας (μ)', type: 'number', placeholder: 'π.χ. 1.5' },
+  ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
+  'Καλλιεργητής': { icon: '⚙️', fields: [
+    { key: 'type', label: 'Τύπος', type: 'select', options: ['Με ελατήρια','Βαρέως τύπου','Ρίπερ'] },
+    { key: 'bodies', label: 'Αριθμός σωμάτων', type: 'number', placeholder: 'π.χ. 9' },
+    { key: 'width', label: 'Πλάτος εργασίας (μ)', type: 'number', placeholder: 'π.χ. 2.5' },
+  ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
+  'Φρέζα': { icon: '🔄', fields: [
+    { key: 'type', label: 'Τύπος', type: 'select', options: ['Σταθερή','Μετατοπιζόμενη'] },
+    { key: 'width', label: 'Πλάτος εργασίας (μ)', type: 'number', placeholder: 'π.χ. 1.8' },
+  ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
+  'Καταστροφέας': { icon: '✂️', fields: [
+    { key: 'type', label: 'Τύπος', type: 'select', options: ['Σφυριά','Μαχαίρια'] },
+    { key: 'width', label: 'Πλάτος εργασίας (μ)', type: 'number', placeholder: 'π.χ. 2.0' },
+  ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
+  'Λιπασματοδιανομέας': { icon: '📦', fields: [
+    { key: 'type', label: 'Τύπος', type: 'select', options: ['Μονός δίσκος','Διπλός δίσκος','Συρόμενος'] },
+    { key: 'capacity', label: 'Χωρητικότητα (λίτρα)', type: 'number', placeholder: 'π.χ. 500' },
+  ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
+  'Ψεκαστικό': { icon: '💧', fields: [
+    { key: 'type', label: 'Τύπος', type: 'select', options: ['Νεφελοψεκαστήρας για δέντρα','Ψεκαστικό μπάρας','Νεφελοψεκαστήρας'] },
+    { key: 'capacity', label: 'Χωρητικότητα (λίτρα)', type: 'number', placeholder: 'π.χ. 1000' },
+    { key: 'tow', label: 'Τρόπος ρυμούλκησης', type: 'select', options: ['Συρόμενο','Αναρτόμενο'] },
+  ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
+  'Άλλος εξοπλισμός': { icon: '🔧', fields: [
+    { key: 'type', label: 'Είδος εξοπλισμού', type: 'text', placeholder: 'π.χ. Μπαλιαστικό' },
+    { key: 'hp', label: 'Ιπποδύναμη (HP)', type: 'number', placeholder: 'π.χ. 80' },
+  ], yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'ha', label: 'Στρέμματα εφαρμογής' }] },
+};
+const FIELD_SECTIONS = [
+  { key: 'info', label: 'Στοιχεία', icon: '📋' },
+  { key: 'tillage', label: 'Κατεργασία', icon: '🔨' },
+  { key: 'crops', label: 'Καλλιέργειες', icon: '🌾' },
+  { key: 'harvest_main', label: 'Συγκομιδή Κύρια', icon: '📅' },
+  { key: 'harvest_cover', label: 'Συγκομιδή Επίσπορη', icon: '📅' },
+  { key: 'fertilizer_n', label: 'Λιπάσματα Αζωτούχα', icon: '🧪' },
+  { key: 'fertilizer_org', label: 'Λιπάσματα Οργανικά', icon: '🌿' },
+];
+const TILLAGE_TYPES = ['Βαθιά άροση','Ελαφρά κατεργασία','Φρεζάρισμα','Καλλιέργεια','Χωρίς κατεργασία','Ελάχιστη κατεργασία'];
 
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
 export default function Home() {
-  const [step, setStep] = useState(1);
-  const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  // PHASE: 'onboarding' | 'equipment' | 'fields' | 'done'
+  const [phase, setPhase] = useState('onboarding');
 
-  const [form, setForm] = useState({
-    type: '',
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    orgName: '',
-    region: '',
-    hectares: '',
-    plots: '',
-    crops: [],
-    equipment: [],
-    agronomist: '',
-    source: '',
-    comments: '',
+  // ONBOARDING STATE
+  const [onbStep, setOnbStep] = useState(1);
+  const [onbErrors, setOnbErrors] = useState({});
+  const [onb, setOnb] = useState({
+    type: '', firstName: '', lastName: '', email: '', phone: '', orgName: '',
+    region: '', hectares: '', plots: '', crops: [], equipment: [],
+    agronomist: '', source: '', comments: '',
   });
 
-  const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
+  // EQUIPMENT STATE
+  const [activeEquip, setActiveEquip] = useState(null);
+  const [equipData, setEquipData] = useState({});
 
-  const toggleArray = (key, val) => {
-    setForm(f => ({
-      ...f,
-      [key]: f[key].includes(val) ? f[key].filter(x => x !== val) : [...f[key], val],
-    }));
-  };
+  // FIELDS STATE
+  const [activePlot, setActivePlot] = useState(1);
+  const [activeFieldSection, setActiveFieldSection] = useState('info');
+  const [fieldData, setFieldData] = useState({});
 
-  const validate = (s) => {
+  const [loading, setLoading] = useState(false);
+
+  // ── helpers ──
+  const setOnbField = (k, v) => setOnb(p => ({ ...p, [k]: v }));
+  const toggleArr = (k, v) => setOnb(p => ({ ...p, [k]: p[k].includes(v) ? p[k].filter(x => x !== v) : [...p[k], v] }));
+  const setEq = (eq, f, v) => setEquipData(p => ({ ...p, [eq]: { ...p[eq], [f]: v } }));
+  const setEqY = (eq, yr, f, v) => setEquipData(p => ({ ...p, [eq]: { ...p[eq], years: { ...p[eq]?.years, [yr]: { ...p[eq]?.years?.[yr], [f]: v } } } }));
+  const setFld = (plot, sec, f, v) => setFieldData(p => ({ ...p, [`p${plot}`]: { ...p[`p${plot}`], [sec]: { ...p[`p${plot}`]?.[sec], [f]: v } } }));
+  const setFldY = (plot, sec, yr, f, v) => setFieldData(p => ({ ...p, [`p${plot}`]: { ...p[`p${plot}`], [sec]: { ...p[`p${plot}`]?.[sec], [yr]: { ...p[`p${plot}`]?.[sec]?.[yr], [f]: v } } } }));
+  const fv = (plot, sec, f) => fieldData[`p${plot}`]?.[sec]?.[f] || '';
+  const fyv = (plot, sec, yr, f) => fieldData[`p${plot}`]?.[sec]?.[yr]?.[f] || '';
+
+  const numPlots = parseInt(onb.plots) || 1;
+  const activeEquipList = onb.equipment.filter(e => EQUIPMENT_SCHEMAS[e]);
+
+  // ── onboarding validation ──
+  const validateOnb = (step) => {
     const e = {};
-    if (s === 1 && !form.type) e.type = true;
-    if (s === 2) {
-      if (!form.firstName) e.firstName = true;
-      if (!form.lastName) e.lastName = true;
-      if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) e.email = true;
-    }
-    if (s === 3) {
-      if (!form.region) e.region = true;
-      if (!form.hectares) e.hectares = true;
-      if (!form.plots) e.plots = true;
-    }
-    if (s === 4 && form.crops.length === 0) e.crops = true;
-    setErrors(e);
+    if (step === 1 && !onb.type) e.type = true;
+    if (step === 2) { if (!onb.firstName) e.firstName = true; if (!onb.lastName) e.lastName = true; if (!onb.email || !/\S+@\S+/.test(onb.email)) e.email = true; }
+    if (step === 3) { if (!onb.region) e.region = true; if (!onb.hectares) e.hectares = true; if (!onb.plots) e.plots = true; }
+    if (step === 4 && onb.crops.length === 0) e.crops = true;
+    setOnbErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const next = () => { if (validate(step)) setStep(s => s + 1); };
-  const prev = () => setStep(s => s - 1);
+  const nextOnbStep = () => {
+    if (!validateOnb(onbStep)) return;
+    if (onbStep < 7) { setOnbStep(s => s + 1); }
+    else {
+      // submit onboarding and go to equipment
+      if (activeEquipList.length > 0) { setActiveEquip(activeEquipList[0]); setPhase('equipment'); }
+      else { setPhase('fields'); }
+    }
+  };
 
-  const submit = async () => {
+  const submitAll = async () => {
     setLoading(true);
     try {
-      await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      setSubmitted(true);
-    } catch (e) {
-      console.error(e);
-    }
+      await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboarding: onb, equipment: equipData, fields: fieldData }) });
+      setPhase('done');
+    } catch (e) { console.error(e); }
     setLoading(false);
   };
 
-  const progress = Math.round((step / TOTAL_STEPS) * 100);
+  const onbProgress = Math.round((onbStep / 7) * 100);
 
-  const displayName = form.orgName || [form.firstName, form.lastName].filter(Boolean).join(' ') || '—';
-
+  // ============================================================
+  // RENDER
+  // ============================================================
   return (
     <>
       <Head>
-        <title>Roots of Carbon — Onboarding</title>
+        <title>Roots of Carbon — Εγγραφή</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
       </Head>
-
       <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: #f4f7f4; min-height: 100vh; padding: 2rem 1rem; }
-        .wrap { max-width: 580px; margin: 0 auto; }
-        .header { background: #1a3d2b; border-radius: 12px; padding: 1.5rem 2rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; }
-        .logo { width: 48px; height: 48px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
-        .header h1 { color: white; font-size: 18px; font-weight: 600; }
-        .header p { color: rgba(255,255,255,0.65); font-size: 13px; margin-top: 2px; }
-        .progress-wrap { margin-bottom: 1.5rem; }
-        .progress-bar { background: #dde8d8; border-radius: 99px; height: 4px; overflow: hidden; }
-        .progress-fill { background: #4a8c2a; height: 100%; border-radius: 99px; transition: width 0.4s ease; }
-        .progress-label { font-size: 12px; color: #666; margin-bottom: 6px; }
-        .card { background: white; border-radius: 12px; padding: 2rem; border: 1px solid #e0ead8; }
-        .step-title { font-size: 15px; font-weight: 600; color: #1a3d2b; margin-bottom: 4px; }
-        .step-sub { font-size: 13px; color: #888; margin-bottom: 1.5rem; }
-        label { display: block; font-size: 13px; font-weight: 500; color: #333; margin-bottom: 5px; }
-        .sublabel { font-size: 12px; color: #888; margin-bottom: 8px; font-weight: 400; }
-        input, select, textarea { width: 100%; border: 1px solid #d0d8cc; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: 'Inter', sans-serif; color: #333; background: white; outline: none; transition: border-color 0.2s; }
-        input:focus, select:focus, textarea:focus { border-color: #4a8c2a; box-shadow: 0 0 0 3px rgba(74,140,42,0.1); }
-        input.err, select.err { border-color: #e24b4a; }
-        .err-msg { font-size: 12px; color: #e24b4a; margin-top: 4px; }
-        .field { margin-bottom: 1.1rem; }
-        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .hint { font-size: 12px; color: #888; margin-top: 4px; }
-        .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .type-card { border: 1px solid #d0d8cc; border-radius: 10px; padding: 16px 12px; cursor: pointer; text-align: center; transition: all 0.15s; background: white; }
-        .type-card:hover { border-color: #4a8c2a; background: #f0f7ec; }
-        .type-card.sel { border: 2px solid #4a8c2a; background: #f0f7ec; }
-        .type-card .icon { font-size: 28px; margin-bottom: 6px; }
-        .type-card .name { font-size: 13px; font-weight: 600; color: #1a3d2b; }
-        .type-card .desc { font-size: 11px; color: #888; margin-top: 2px; }
-        .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .check-item { border: 1px solid #d0d8cc; border-radius: 8px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.15s; background: white; }
-        .check-item:hover { border-color: #4a8c2a; }
-        .check-item.sel { border-color: #4a8c2a; background: #f0f7ec; }
-        .check-box { width: 16px; height: 16px; border: 1.5px solid #ccc; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-        .check-item.sel .check-box { background: #4a8c2a; border-color: #4a8c2a; color: white; font-size: 10px; }
-        .check-item span { font-size: 13px; color: #333; }
-        .radio-group { display: flex; flex-direction: column; gap: 8px; }
-        .radio-item { border: 1px solid #d0d8cc; border-radius: 8px; padding: 11px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.15s; background: white; }
-        .radio-item:hover { border-color: #4a8c2a; }
-        .radio-item.sel { border-color: #4a8c2a; background: #f0f7ec; }
-        .radio-dot { width: 16px; height: 16px; border: 1.5px solid #ccc; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-        .radio-item.sel .radio-dot { border-color: #4a8c2a; }
-        .radio-inner { width: 8px; height: 8px; border-radius: 50%; background: #4a8c2a; display: none; }
-        .radio-item.sel .radio-inner { display: block; }
-        .radio-item span { font-size: 13px; color: #333; }
-        .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; }
-        .btn-back { padding: 10px 20px; border: 1px solid #d0d8cc; border-radius: 8px; background: transparent; color: #666; font-size: 14px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
-        .btn-back:hover { background: #f5f5f5; }
-        .btn-next { padding: 10px 28px; border: none; border-radius: 8px; background: #1a3d2b; color: white; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; margin-left: auto; }
-        .btn-next:hover { background: #4a8c2a; }
-        .btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
-        .success { text-align: center; padding: 1rem 0; }
-        .success-icon { font-size: 52px; margin-bottom: 1rem; }
-        .success h2 { font-size: 20px; color: #1a3d2b; margin-bottom: 8px; }
-        .success p { font-size: 14px; color: #666; }
-        .summary { background: #f4f7f4; border-radius: 8px; padding: 1rem 1.25rem; margin-top: 1.5rem; text-align: left; }
-        .sum-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #e0e8d8; gap: 12px; font-size: 13px; }
-        .sum-row:last-child { border-bottom: none; }
-        .sum-k { color: #888; flex-shrink: 0; }
-        .sum-v { color: #1a3d2b; font-weight: 500; text-align: right; }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Inter',sans-serif;background:#f4f7f4;min-height:100vh;padding:2rem 1rem}
+        .wrap{max-width:620px;margin:0 auto}
+        .header{background:#1a3d2b;border-radius:12px;padding:1.5rem 2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem}
+        .logo{width:48px;height:48px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+        .header h1{color:white;font-size:18px;font-weight:600}
+        .header p{color:rgba(255,255,255,0.65);font-size:13px;margin-top:2px}
+        .phase-bar{display:flex;gap:0;margin-bottom:1.5rem;border-radius:99px;overflow:hidden;border:1px solid #d0d8cc}
+        .phase-item{flex:1;padding:8px;text-align:center;font-size:12px;background:white;color:#888;transition:all 0.2s}
+        .phase-item.active{background:#1a3d2b;color:white;font-weight:500}
+        .phase-item.done{background:#e8f4e0;color:#1a3d2b}
+        .prog-bar{background:#dde8d8;border-radius:99px;height:4px;margin-bottom:1.5rem;overflow:hidden}
+        .prog-fill{background:#4a8c2a;height:100%;border-radius:99px;transition:width 0.4s}
+        .prog-label{font-size:12px;color:#666;margin-bottom:6px}
+        .card{background:white;border-radius:12px;padding:2rem;border:1px solid #e0ead8}
+        .step-title{font-size:15px;font-weight:600;color:#1a3d2b;margin-bottom:4px}
+        .step-sub{font-size:13px;color:#888;margin-bottom:1.5rem}
+        label{display:block;font-size:13px;font-weight:500;color:#333;margin-bottom:5px}
+        input,select,textarea{width:100%;border:1px solid #d0d8cc;border-radius:8px;padding:10px 12px;font-size:14px;font-family:'Inter',sans-serif;color:#333;background:white;outline:none;transition:border-color 0.2s}
+        input:focus,select:focus,textarea:focus{border-color:#4a8c2a;box-shadow:0 0 0 3px rgba(74,140,42,0.1)}
+        input.err,select.err{border-color:#e24b4a}
+        .err-msg{font-size:12px;color:#e24b4a;margin-top:4px}
+        .field{margin-bottom:1rem}
+        .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+        .type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+        .type-card{border:1px solid #d0d8cc;border-radius:10px;padding:16px 12px;cursor:pointer;text-align:center;transition:all 0.15s;background:white}
+        .type-card:hover{border-color:#4a8c2a;background:#f0f7ec}
+        .type-card.sel{border:2px solid #4a8c2a;background:#f0f7ec}
+        .type-card .icon{font-size:28px;margin-bottom:6px}
+        .type-card .name{font-size:13px;font-weight:600;color:#1a3d2b}
+        .type-card .desc{font-size:11px;color:#888;margin-top:2px}
+        .check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .check-item{border:1px solid #d0d8cc;border-radius:8px;padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all 0.15s;background:white}
+        .check-item:hover{border-color:#4a8c2a}
+        .check-item.sel{border-color:#4a8c2a;background:#f0f7ec}
+        .check-box{width:16px;height:16px;border:1.5px solid #ccc;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px}
+        .check-item.sel .check-box{background:#4a8c2a;border-color:#4a8c2a;color:white}
+        .check-item span{font-size:13px;color:#333}
+        .radio-group{display:flex;flex-direction:column;gap:8px}
+        .radio-item{border:1px solid #d0d8cc;border-radius:8px;padding:11px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.15s;background:white}
+        .radio-item:hover{border-color:#4a8c2a}
+        .radio-item.sel{border-color:#4a8c2a;background:#f0f7ec}
+        .radio-dot{width:16px;height:16px;border:1.5px solid #ccc;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+        .radio-item.sel .radio-dot{border-color:#4a8c2a}
+        .radio-inner{width:8px;height:8px;border-radius:50%;background:#4a8c2a;display:none}
+        .radio-item.sel .radio-inner{display:block}
+        .radio-item span{font-size:13px;color:#333}
+        .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem}
+        .tab{padding:8px 16px;border-radius:99px;border:1px solid #d0d8cc;background:white;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;color:#333}
+        .tab:hover{border-color:#4a8c2a}
+        .tab.active{background:#1a3d2b;color:white;border-color:#1a3d2b}
+        .sec-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.5rem}
+        .sec-btn{padding:6px 12px;border-radius:8px;border:1px solid #d0d8cc;background:white;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;color:#555}
+        .sec-btn:hover{border-color:#4a8c2a;color:#1a3d2b}
+        .sec-btn.active{background:#e8f4e0;border-color:#4a8c2a;color:#1a3d2b;font-weight:500}
+        .year-block{border:1px solid #e0ead8;border-radius:8px;padding:1rem;margin-bottom:10px}
+        .year-badge{display:inline-block;background:#1a3d2b;color:white;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;margin-bottom:10px}
+        .nav{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;gap:12px}
+        .btn-back{padding:10px 20px;border:1px solid #d0d8cc;border-radius:8px;background:transparent;color:#666;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s}
+        .btn-back:hover{background:#f5f5f5}
+        .btn-next{padding:10px 28px;border:none;border-radius:8px;background:#1a3d2b;color:white;font-size:14px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;margin-left:auto}
+        .btn-next:hover{background:#4a8c2a}
+        .btn-next:disabled{opacity:0.5;cursor:not-allowed}
+        .hint{font-size:12px;color:#888;margin-top:4px}
+        .required{color:#4a8c2a}
+        .success-icon{font-size:52px;margin-bottom:1rem}
+        .summary{background:#f4f7f4;border-radius:8px;padding:1rem 1.25rem;margin-top:1.5rem}
+        .sum-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e0e8d8;gap:12px;font-size:13px}
+        .sum-row:last-child{border-bottom:none}
+        .sum-k{color:#888;flex-shrink:0}
+        .sum-v{color:#1a3d2b;font-weight:500;text-align:right}
       `}</style>
 
       <div className="wrap">
         <div className="header">
-          <svg viewBox="0 0 100 100" width="44" height="44" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="50" cy="50" r="45" fill="none" stroke="#1a1a1a" strokeWidth="8" strokeDasharray="6 3"/>
-  <ellipse cx="44" cy="54" rx="14" ry="20" fill="#5a9e3a" transform="rotate(-15 44 54)"/>
-  <ellipse cx="56" cy="52" rx="11" ry="17" fill="#2d6e18" transform="rotate(10 56 52)"/>
-</svg>
+          <div className="logo">🌱</div>
           <div>
             <h1>Roots of Carbon</h1>
-            <p>Αρχική καταγραφή ενδιαφέροντος</p>
+            <p>
+              {phase === 'onboarding' && 'Φόρμα εκδήλωσης ενδιαφέροντος'}
+              {phase === 'equipment' && 'Καταγραφή γεωργικού εξοπλισμού'}
+              {phase === 'fields' && 'Καταγραφή στοιχείων αγροτεμαχίων'}
+              {phase === 'done' && 'Ολοκλήρωση'}
+            </p>
           </div>
         </div>
 
-        <div className="progress-wrap">
-          <div className="progress-label">Βήμα {step} από {TOTAL_STEPS}</div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: progress + '%' }} />
-          </div>
+        {/* Phase indicator */}
+        <div className="phase-bar">
+          <div className={`phase-item ${phase === 'onboarding' ? 'active' : ['equipment','fields','done'].includes(phase) ? 'done' : ''}`}>1. Εγγραφή</div>
+          <div className={`phase-item ${phase === 'equipment' ? 'active' : ['fields','done'].includes(phase) ? 'done' : ''}`}>2. Εξοπλισμός</div>
+          <div className={`phase-item ${phase === 'fields' ? 'active' : phase === 'done' ? 'done' : ''}`}>3. Αγροτεμάχια</div>
         </div>
 
-        <div className="card">
-          {submitted ? (
-            <div className="success">
-              <div className="success-icon">✅</div>
-              <h2>Ευχαριστούμε!</h2>
-              <p>Λάβαμε τα στοιχεία σας. Θα επικοινωνήσουμε μαζί σας σύντομα.</p>
-              <div className="summary">
-                {[
-                  ['Τύπος', form.type],
-                  ['Όνομα', displayName],
-                  ['Email', form.email],
-                  ['Περιοχή', form.region],
-                  ['Έκταση', form.hectares ? `${form.hectares} ha · ${form.plots} τεμάχια` : '—'],
-                  ['Καλλιέργειες', form.crops.join(', ') || '—'],
-                  ['Εξοπλισμός', form.equipment.join(', ') || '—'],
-                ].map(([k, v]) => (
-                  <div className="sum-row" key={k}>
-                    <span className="sum-k">{k}</span>
-                    <span className="sum-v">{v || '—'}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* STEP 1 */}
-              {step === 1 && (
+        {/* ====== ONBOARDING ====== */}
+        {phase === 'onboarding' && (
+          <>
+            <div className="prog-label">Βήμα {onbStep} από 7</div>
+            <div className="prog-bar"><div className="prog-fill" style={{ width: onbProgress + '%' }} /></div>
+            <div className="card">
+              {onbStep === 1 && (
                 <>
-                  <div className="step-title">Ποιος είστε;</div>
-                  <div className="step-sub">Επιλέξτε τον τύπο που σας εκπροσωπεί</div>
+                  <div className="step-title">Τύπος οντότητας</div>
+                  <div className="step-sub">Παρακαλούμε επιλέξτε τον τύπο που σας εκπροσωπεί.</div>
                   <div className="type-grid">
-                    {[
-                      { val: 'Μεμονωμένος αγρότης', icon: '🧑‍🌾', name: 'Αγρότης', desc: 'Μεμονωμένος παραγωγός' },
-                      { val: 'Αγροτικός συνεταιρισμός', icon: '🤝', name: 'Συνεταιρισμός', desc: 'Αγροτική ένωση' },
-                      { val: 'Εταιρεία', icon: '🏢', name: 'Εταιρεία', desc: 'Νομικό πρόσωπο' },
-                    ].map(t => (
-                      <div key={t.val} className={`type-card ${form.type === t.val ? 'sel' : ''}`} onClick={() => set('type', t.val)}>
-                        <div className="icon">{t.icon}</div>
-                        <div className="name">{t.name}</div>
-                        <div className="desc">{t.desc}</div>
+                    {[{v:'Μεμονωμένος αγρότης',i:'🧑‍🌾',n:'Αγρότης',d:'Μεμονωμένος παραγωγός'},{v:'Αγροτικός συνεταιρισμός',i:'🤝',n:'Συνεταιρισμός',d:'Αγροτική ένωση'},{v:'Εταιρεία',i:'🏢',n:'Εταιρεία',d:'Νομικό πρόσωπο'}].map(t => (
+                      <div key={t.v} className={`type-card ${onb.type === t.v ? 'sel' : ''}`} onClick={() => setOnbField('type', t.v)}>
+                        <div className="icon">{t.i}</div><div className="name">{t.n}</div><div className="desc">{t.d}</div>
                       </div>
                     ))}
                   </div>
-                  {errors.type && <div className="err-msg" style={{marginTop: '8px'}}>Παρακαλώ επιλέξτε τύπο</div>}
+                  {onbErrors.type && <div className="err-msg">Παρακαλούμε επιλέξτε τύπο οντότητας.</div>}
                 </>
               )}
-
-              {/* STEP 2 */}
-              {step === 2 && (
+              {onbStep === 2 && (
                 <>
                   <div className="step-title">Στοιχεία επικοινωνίας</div>
-                  <div className="step-sub">Πώς να σας βρούμε;</div>
+                  <div className="step-sub">Συμπληρώστε τα στοιχεία σας για να επικοινωνήσουμε μαζί σας.</div>
                   <div className="row2">
-                    <div className="field">
-                      <label>Όνομα *</label>
-                      <input className={errors.firstName ? 'err' : ''} value={form.firstName} onChange={e => set('firstName', e.target.value)} placeholder="π.χ. Γιώργης" />
-                    </div>
-                    <div className="field">
-                      <label>Επώνυμο *</label>
-                      <input className={errors.lastName ? 'err' : ''} value={form.lastName} onChange={e => set('lastName', e.target.value)} placeholder="π.χ. Παπαδόπουλος" />
-                    </div>
+                    <div className="field"><label>Όνομα <span className="required">*</span></label><input className={onbErrors.firstName ? 'err' : ''} value={onb.firstName} onChange={e => setOnbField('firstName', e.target.value)} placeholder="π.χ. Γιώργος" /></div>
+                    <div className="field"><label>Επώνυμο <span className="required">*</span></label><input className={onbErrors.lastName ? 'err' : ''} value={onb.lastName} onChange={e => setOnbField('lastName', e.target.value)} placeholder="π.χ. Παπαδόπουλος" /></div>
                   </div>
-                  <div className="field">
-                    <label>Email *</label>
-                    <input className={errors.email ? 'err' : ''} type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="email@example.com" />
-                    {errors.email && <div className="err-msg">Εισάγετε έγκυρο email</div>}
-                  </div>
-                  <div className="field">
-                    <label>Τηλέφωνο</label>
-                    <input type="tel" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="π.χ. 6901234567" />
-                  </div>
-                  {form.type !== 'Μεμονωμένος αγρότης' && (
-                    <div className="field">
-                      <label>Όνομα {form.type === 'Εταιρεία' ? 'εταιρείας' : 'συνεταιρισμού'}</label>
-                      <input value={form.orgName} onChange={e => set('orgName', e.target.value)} placeholder="π.χ. ΑΣ Οροπεδίου Φολόης" />
-                    </div>
-                  )}
+                  <div className="field"><label>Διεύθυνση email <span className="required">*</span></label><input className={onbErrors.email ? 'err' : ''} type="email" value={onb.email} onChange={e => setOnbField('email', e.target.value)} placeholder="email@example.com" />{onbErrors.email && <div className="err-msg">Εισάγετε έγκυρη διεύθυνση email.</div>}</div>
+                  <div className="field"><label>Τηλέφωνο επικοινωνίας</label><input type="tel" value={onb.phone} onChange={e => setOnbField('phone', e.target.value)} placeholder="π.χ. 6901234567" /></div>
+                  {onb.type !== 'Μεμονωμένος αγρότης' && <div className="field"><label>Επωνυμία {onb.type === 'Εταιρεία' ? 'εταιρείας' : 'συνεταιρισμού'}</label><input value={onb.orgName} onChange={e => setOnbField('orgName', e.target.value)} placeholder="π.χ. ΑΣ Οροπεδίου Φολόης" /></div>}
                 </>
               )}
-
-              {/* STEP 3 */}
-              {step === 3 && (
+              {onbStep === 3 && (
                 <>
-                  <div className="step-title">Τοποθεσία & μέγεθος</div>
+                  <div className="step-title">Τοποθεσία και έκταση</div>
                   <div className="step-sub">Πού βρίσκονται τα αγροτεμάχιά σας;</div>
-                  <div className="field">
-                    <label>Νομός / Περιφέρεια *</label>
-                    <select className={errors.region ? 'err' : ''} value={form.region} onChange={e => set('region', e.target.value)}>
-                      <option value="">Επιλέξτε...</option>
-                      {REGIONS.map(r => <option key={r}>{r}</option>)}
-                    </select>
-                  </div>
+                  <div className="field"><label>Νομός / Περιφέρεια <span className="required">*</span></label><select className={onbErrors.region ? 'err' : ''} value={onb.region} onChange={e => setOnbField('region', e.target.value)}><option value="">Επιλέξτε...</option>{REGIONS.map(r => <option key={r}>{r}</option>)}</select></div>
                   <div className="row2">
-                    <div className="field">
-                      <label>Συνολική έκταση (ha) *</label>
-                      <input className={errors.hectares ? 'err' : ''} type="number" min="0" step="0.1" value={form.hectares} onChange={e => set('hectares', e.target.value)} placeholder="π.χ. 15" />
-                      <div className="hint">1 ha = 10 στρέμματα</div>
-                    </div>
-                    <div className="field">
-                      <label>Αριθμός τεμαχίων *</label>
-                      <input className={errors.plots ? 'err' : ''} type="number" min="1" step="1" value={form.plots} onChange={e => set('plots', e.target.value)} placeholder="π.χ. 3" />
-                    </div>
+                    <div className="field"><label>Συνολική έκταση (ha) <span className="required">*</span></label><input className={onbErrors.hectares ? 'err' : ''} type="number" min="0" step="0.1" value={onb.hectares} onChange={e => setOnbField('hectares', e.target.value)} placeholder="π.χ. 15" /><div className="hint">1 ha = 10 στρέμματα</div></div>
+                    <div className="field"><label>Αριθμός αγροτεμαχίων <span className="required">*</span></label><input className={onbErrors.plots ? 'err' : ''} type="number" min="1" step="1" value={onb.plots} onChange={e => setOnbField('plots', e.target.value)} placeholder="π.χ. 3" /></div>
                   </div>
-                  {errors.region && <div className="err-msg">Συμπληρώστε όλα τα υποχρεωτικά πεδία</div>}
+                  {(onbErrors.region || onbErrors.hectares || onbErrors.plots) && <div className="err-msg">Παρακαλούμε συμπληρώστε όλα τα υποχρεωτικά πεδία.</div>}
                 </>
               )}
-
-              {/* STEP 4 */}
-              {step === 4 && (
+              {onbStep === 4 && (
                 <>
                   <div className="step-title">Κύριες καλλιέργειες</div>
-                  <div className="step-sub">Επιλέξτε όσες ισχύουν</div>
+                  <div className="step-sub">Επιλέξτε τις καλλιέργειες που αφορούν τα αγροτεμάχιά σας.</div>
                   <div className="check-grid">
-                    {CROPS.map(c => (
-                      <div key={c} className={`check-item ${form.crops.includes(c) ? 'sel' : ''}`} onClick={() => toggleArray('crops', c)}>
-                        <div className="check-box">{form.crops.includes(c) ? '✓' : ''}</div>
-                        <span>{c}</span>
+                    {ONBOARDING_CROPS.map(c => (
+                      <div key={c} className={`check-item ${onb.crops.includes(c) ? 'sel' : ''}`} onClick={() => toggleArr('crops', c)}>
+                        <div className="check-box">{onb.crops.includes(c) ? '✓' : ''}</div><span>{c}</span>
                       </div>
                     ))}
                   </div>
-                  {errors.crops && <div className="err-msg" style={{marginTop:'8px'}}>Επιλέξτε τουλάχιστον μία καλλιέργεια</div>}
+                  {onbErrors.crops && <div className="err-msg" style={{marginTop:'8px'}}>Παρακαλούμε επιλέξτε τουλάχιστον μία καλλιέργεια.</div>}
                 </>
               )}
-
-              {/* STEP 5 */}
-              {step === 5 && (
+              {onbStep === 5 && (
                 <>
-                  <div className="step-title">Διαθέσιμος εξοπλισμός</div>
-                  <div className="step-sub">Επιλέξτε όλα όσα διαθέτετε — θα λάβετε τις αντίστοιχες φόρμες</div>
+                  <div className="step-title">Διαθέσιμος γεωργικός εξοπλισμός</div>
+                  <div className="step-sub">Επιλέξτε τον εξοπλισμό που διαθέτετε.</div>
                   <div className="check-grid">
-                    {EQUIPMENT.map(e => (
-                      <div key={e} className={`check-item ${form.equipment.includes(e) ? 'sel' : ''}`} onClick={() => toggleArray('equipment', e)}>
-                        <div className="check-box">{form.equipment.includes(e) ? '✓' : ''}</div>
-                        <span>{e}</span>
+                    {EQUIPMENT_LIST.map(e => (
+                      <div key={e} className={`check-item ${onb.equipment.includes(e) ? 'sel' : ''}`} onClick={() => toggleArr('equipment', e)}>
+                        <div className="check-box">{onb.equipment.includes(e) ? '✓' : ''}</div><span>{e}</span>
                       </div>
                     ))}
                   </div>
                 </>
               )}
-
-              {/* STEP 6 */}
-              {step === 6 && (
+              {onbStep === 6 && (
                 <>
-                  <div className="step-title">Συνεργάτες & πηγή</div>
-                  <div className="step-sub">Λίγες ακόμα ερωτήσεις</div>
+                  <div className="step-title">Συνεργάτες και πηγή ενημέρωσης</div>
+                  <div className="step-sub">Οι πληροφορίες αυτές μας βοηθούν να κατανοήσουμε καλύτερα τις ανάγκες σας.</div>
                   <div className="field">
-                    <label>Συνεργάζεστε με γεωπόνο ή σύμβουλο;</label>
+                    <label>Συνεργάζεστε με γεωπόνο ή γεωτεχνικό σύμβουλο;</label>
                     <div className="radio-group" style={{marginTop:'6px'}}>
-                      {['Ναι, τακτικά', 'Ναι, περιστασιακά', 'Όχι'].map(o => (
-                        <div key={o} className={`radio-item ${form.agronomist === o ? 'sel' : ''}`} onClick={() => set('agronomist', o)}>
-                          <div className="radio-dot"><div className="radio-inner" /></div>
-                          <span>{o}</span>
+                      {['Ναι, τακτικά','Ναι, περιστασιακά','Όχι'].map(o => (
+                        <div key={o} className={`radio-item ${onb.agronomist === o ? 'sel' : ''}`} onClick={() => setOnbField('agronomist', o)}>
+                          <div className="radio-dot"><div className="radio-inner" /></div><span>{o}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div className="field" style={{marginTop:'1.25rem'}}>
-                    <label>Πώς ακούσατε για την Roots of Carbon;</label>
+                    <label>Πώς πληροφορηθήκατε για την Roots of Carbon;</label>
                     <div className="radio-group" style={{marginTop:'6px'}}>
-                      {['Σύσταση από γνωστό / συνεργάτη', 'Social media', 'Event / συνέδριο', 'Αναζήτηση στο διαδίκτυο', 'Άλλο'].map(o => (
-                        <div key={o} className={`radio-item ${form.source === o ? 'sel' : ''}`} onClick={() => set('source', o)}>
-                          <div className="radio-dot"><div className="radio-inner" /></div>
-                          <span>{o}</span>
+                      {['Σύσταση από γνωστό ή συνεργάτη','Μέσα κοινωνικής δικτύωσης','Εκδήλωση / συνέδριο','Αναζήτηση στο διαδίκτυο','Άλλο'].map(o => (
+                        <div key={o} className={`radio-item ${onb.source === o ? 'sel' : ''}`} onClick={() => setOnbField('source', o)}>
+                          <div className="radio-dot"><div className="radio-inner" /></div><span>{o}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 </>
               )}
-
-              {/* STEP 7 */}
-              {step === 7 && (
+              {onbStep === 7 && (
                 <>
-                  <div className="step-title">Σχόλια</div>
-                  <div className="step-sub">Προαιρετικό — οποιαδήποτε πληροφορία βοηθάει</div>
-                  <div className="field">
-                    <textarea rows={5} value={form.comments} onChange={e => set('comments', e.target.value)} placeholder="π.χ. Έχω ήδη εδαφολογικές αναλύσεις, ενδιαφέρομαι κυρίως για..." />
+                  <div className="step-title">Πρόσθετες πληροφορίες</div>
+                  <div className="step-sub">Εάν επιθυμείτε, μπορείτε να προσθέσετε οποιαδήποτε πρόσθετη πληροφορία.</div>
+                  <div className="field"><textarea rows={5} value={onb.comments} onChange={e => setOnbField('comments', e.target.value)} placeholder="π.χ. Διαθέτω ήδη εδαφολογικές αναλύσεις, ενδιαφέρομαι κυρίως για..." /></div>
+                </>
+              )}
+              <div className="nav">
+                {onbStep > 1 && <button className="btn-back" onClick={() => setOnbStep(s => s - 1)}>← Προηγούμενο</button>}
+                <button className="btn-next" onClick={nextOnbStep}>
+                  {onbStep === 7 ? (activeEquipList.length > 0 ? 'Επόμενο: Εξοπλισμός →' : 'Επόμενο: Αγροτεμάχια →') : 'Επόμενο →'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ====== EQUIPMENT ====== */}
+        {phase === 'equipment' && (
+          <>
+            <div className="tabs">
+              {activeEquipList.map(eq => (
+                <button key={eq} className={`tab ${activeEquip === eq ? 'active' : ''}`} onClick={() => setActiveEquip(eq)}>
+                  {EQUIPMENT_SCHEMAS[eq].icon} {eq}
+                </button>
+              ))}
+            </div>
+            <div className="card">
+              {activeEquip && EQUIPMENT_SCHEMAS[activeEquip] && (
+                <>
+                  <div className="step-title">{EQUIPMENT_SCHEMAS[activeEquip].icon} {activeEquip}</div>
+                  <div className="step-sub">Συμπληρώστε τα στοιχεία για τον εξοπλισμό σας.</div>
+                  <div className="row2">
+                    {EQUIPMENT_SCHEMAS[activeEquip].fields.map(f => (
+                      <div className="field" key={f.key}>
+                        <label>{f.label}</label>
+                        {f.type === 'select'
+                          ? <select value={equipData[activeEquip]?.[f.key] || ''} onChange={e => setEq(activeEquip, f.key, e.target.value)}><option value="">Επιλέξτε...</option>{f.options.map(o => <option key={o}>{o}</option>)}</select>
+                          : <input type={f.type} placeholder={f.placeholder} value={equipData[activeEquip]?.[f.key] || ''} onChange={e => setEq(activeEquip, f.key, e.target.value)} />
+                        }
+                      </div>
+                    ))}
                   </div>
+                  <div style={{marginTop:'1.5rem'}}>
+                    <label style={{marginBottom:'10px',display:'block',color:'#1a3d2b',fontWeight:'600'}}>Ιστορικά στοιχεία ανά έτος</label>
+                    {EQUIPMENT_SCHEMAS[activeEquip].yearlyFields.map(yf => (
+                      <div className="field" key={yf.key}>
+                        <label>{yf.label}</label>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'8px'}}>
+                          {YEARS.map(yr => (
+                            <div key={yr}>
+                              <div style={{fontSize:'11px',fontWeight:'600',color:'#1a3d2b',textAlign:'center',marginBottom:'4px'}}>{yr}</div>
+                              <input type="number" placeholder="—" style={{textAlign:'center',padding:'8px 4px',fontSize:'13px'}} value={equipData[activeEquip]?.years?.[yr]?.[yf.key] || ''} onChange={e => setEqY(activeEquip, yr, yf.key, e.target.value)} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              <div className="nav">
+                {activeEquipList.indexOf(activeEquip) > 0 && (
+                  <button className="btn-back" onClick={() => setActiveEquip(activeEquipList[activeEquipList.indexOf(activeEquip) - 1])}>← Προηγούμενο</button>
+                )}
+                {activeEquipList.indexOf(activeEquip) < activeEquipList.length - 1 ? (
+                  <button className="btn-next" onClick={() => setActiveEquip(activeEquipList[activeEquipList.indexOf(activeEquip) + 1])}>Επόμενο →</button>
+                ) : (
+                  <button className="btn-next" onClick={() => setPhase('fields')}>Επόμενο: Αγροτεμάχια →</button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ====== FIELDS ====== */}
+        {phase === 'fields' && (
+          <>
+            <div className="tabs">
+              {Array.from({ length: numPlots }, (_, i) => i + 1).map(p => (
+                <button key={p} className={`tab ${activePlot === p ? 'active' : ''}`} onClick={() => setActivePlot(p)}>📍 Αγροτεμάχιο {p}</button>
+              ))}
+            </div>
+            <div className="sec-nav">
+              {FIELD_SECTIONS.map(s => (
+                <button key={s.key} className={`sec-btn ${activeFieldSection === s.key ? 'active' : ''}`} onClick={() => setActiveFieldSection(s.key)}>
+                  {s.icon} {s.label}
+                </button>
+              ))}
+            </div>
+            <div className="card">
+              {activeFieldSection === 'info' && (
+                <>
+                  <div className="step-title">📋 Στοιχεία αγροτεμαχίου {activePlot}</div>
+                  <div className="step-sub">Βασικές πληροφορίες για το αγροτεμάχιο.</div>
+                  <div className="row2">
+                    <div className="field"><label>Περιοχή</label><input placeholder="π.χ. Ηλεία" value={fv(activePlot,'info','region')} onChange={e => setFld(activePlot,'info','region',e.target.value)} /></div>
+                    <div className="field"><label>Έκταση (ha)</label><input type="number" step="0.1" placeholder="π.χ. 5" value={fv(activePlot,'info','area')} onChange={e => setFld(activePlot,'info','area',e.target.value)} /></div>
+                  </div>
+                  <div className="field"><label>Συντεταγμένες GIS</label><input placeholder="π.χ. 37°43'42.6N 21°44'10.9E" value={fv(activePlot,'info','gis')} onChange={e => setFld(activePlot,'info','gis',e.target.value)} /></div>
+                  <div className="row3">
+                    <div className="field"><label>Αρδευόμενο</label><select value={fv(activePlot,'info','irrigated')} onChange={e => setFld(activePlot,'info','irrigated',e.target.value)}><option value="">Επιλέξτε...</option><option>Ναι</option><option>Όχι</option></select></div>
+                    <div className="field"><label>Έξυπνη άρδευση</label><select value={fv(activePlot,'info','smart_irr')} onChange={e => setFld(activePlot,'info','smart_irr',e.target.value)}><option value="">Επιλέξτε...</option><option>Ναι</option><option>Όχι</option></select></div>
+                    <div className="field"><label>Βόσκηση</label><select value={fv(activePlot,'info','grazing')} onChange={e => setFld(activePlot,'info','grazing',e.target.value)}><option value="">Επιλέξτε...</option><option>Ναι</option><option>Όχι</option></select></div>
+                  </div>
+                  <div className="row2">
+                    <div className="field"><label>Εφαρμογή εδαφικού ασβέστη</label><select value={fv(activePlot,'info','lime')} onChange={e => setFld(activePlot,'info','lime',e.target.value)}><option value="">Επιλέξτε...</option><option>Ναι</option><option>Όχι</option></select></div>
+                    <div className="field"><label>Διαχείριση υπολειμμάτων</label><select value={fv(activePlot,'info','residues')} onChange={e => setFld(activePlot,'info','residues',e.target.value)}><option value="">Επιλέξτε...</option><option>Ενσωμάτωση</option><option>Παραμονή επιφανειακά</option><option>Απόρριψη</option><option>Καύση</option></select></div>
+                  </div>
+                  <div className="field"><label>Σχόλια</label><textarea rows={3} placeholder="Προαιρετικά σχόλια..." value={fv(activePlot,'info','notes')} onChange={e => setFld(activePlot,'info','notes',e.target.value)} /></div>
+                </>
+              )}
+              {activeFieldSection === 'tillage' && (
+                <>
+                  <div className="step-title">🔨 Κατεργασία εδάφους — Αγροτεμάχιο {activePlot}</div>
+                  <div className="step-sub">Τύπος, ημερομηνία και βάθος κατεργασίας ανά έτος.</div>
+                  {YEARS.map(yr => (
+                    <div className="year-block" key={yr}>
+                      <div className="year-badge">{yr}</div>
+                      <div className="row3">
+                        <div className="field"><label>Τύπος κατεργασίας</label><select value={fyv(activePlot,'tillage',yr,'type')} onChange={e => setFldY(activePlot,'tillage',yr,'type',e.target.value)}><option value="">Επιλέξτε...</option>{TILLAGE_TYPES.map(t => <option key={t}>{t}</option>)}</select></div>
+                        <div className="field"><label>Μήνας εφαρμογής</label><select value={fyv(activePlot,'tillage',yr,'month')} onChange={e => setFldY(activePlot,'tillage',yr,'month',e.target.value)}><option value="">Επιλέξτε...</option>{MONTHS.map(m => <option key={m}>{m}</option>)}</select></div>
+                        <div className="field"><label>Βάθος εφαρμογής (cm)</label><input type="number" placeholder="π.χ. 25" value={fyv(activePlot,'tillage',yr,'depth')} onChange={e => setFldY(activePlot,'tillage',yr,'depth',e.target.value)} /></div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+              {activeFieldSection === 'crops' && (
+                <>
+                  <div className="step-title">🌾 Καλλιεργούμενα είδη — Αγροτεμάχιο {activePlot}</div>
+                  <div className="step-sub">Κύρια και δευτερεύουσα καλλιέργεια ανά έτος.</div>
+                  {YEARS.map(yr => (
+                    <div className="year-block" key={yr}>
+                      <div className="year-badge">{yr}</div>
+                      <div className="row2">
+                        <div className="field"><label>Κύρια καλλιέργεια</label><select value={fyv(activePlot,'crops',yr,'main')} onChange={e => setFldY(activePlot,'crops',yr,'main',e.target.value)}><option value="">Επιλέξτε...</option>{CROPS_LIST.map(c => <option key={c}>{c}</option>)}</select></div>
+                        <div className="field"><label>Δευτερεύουσα / Επίσπορη</label><select value={fyv(activePlot,'crops',yr,'cover')} onChange={e => setFldY(activePlot,'crops',yr,'cover',e.target.value)}><option value="">Επιλέξτε...</option>{CROPS_LIST.map(c => <option key={c}>{c}</option>)}</select></div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+              {activeFieldSection === 'harvest_main' && (
+                <>
+                  <div className="step-title">📅 Σχεδιασμός & Συγκομιδή Κύριας — Αγροτεμάχιο {activePlot}</div>
+                  <div className="step-sub">Ημερομηνίες σποράς, συγκομιδής και απόδοση ανά έτος.</div>
+                  {YEARS.map(yr => (
+                    <div className="year-block" key={yr}>
+                      <div className="year-badge">{yr}</div>
+                      <div className="row3">
+                        <div className="field"><label>Μήνας σποράς</label><select value={fyv(activePlot,'harvest_main',yr,'sow')} onChange={e => setFldY(activePlot,'harvest_main',yr,'sow',e.target.value)}><option value="">Επιλέξτε...</option>{MONTHS.map(m => <option key={m}>{m}</option>)}</select></div>
+                        <div className="field"><label>Μήνας συγκομιδής</label><select value={fyv(activePlot,'harvest_main',yr,'harvest')} onChange={e => setFldY(activePlot,'harvest_main',yr,'harvest',e.target.value)}><option value="">Επιλέξτε...</option>{MONTHS.map(m => <option key={m}>{m}</option>)}</select></div>
+                        <div className="field"><label>Απόδοση (kg/ha)</label><input type="number" placeholder="π.χ. 3000" value={fyv(activePlot,'harvest_main',yr,'yield')} onChange={e => setFldY(activePlot,'harvest_main',yr,'yield',e.target.value)} /></div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+              {activeFieldSection === 'harvest_cover' && (
+                <>
+                  <div className="step-title">📅 Σχεδιασμός & Συγκομιδή Επίσπορης — Αγροτεμάχιο {activePlot}</div>
+                  <div className="step-sub">Ημερομηνίες σποράς, συγκομιδής και απόδοση επίσπορης καλλιέργειας ανά έτος.</div>
+                  {YEARS.map(yr => (
+                    <div className="year-block" key={yr}>
+                      <div className="year-badge">{yr}</div>
+                      <div className="row3">
+                        <div className="field"><label>Μήνας σποράς</label><select value={fyv(activePlot,'harvest_cover',yr,'sow')} onChange={e => setFldY(activePlot,'harvest_cover',yr,'sow',e.target.value)}><option value="">Επιλέξτε...</option>{MONTHS.map(m => <option key={m}>{m}</option>)}</select></div>
+                        <div className="field"><label>Μήνας συγκομιδής</label><select value={fyv(activePlot,'harvest_cover',yr,'harvest')} onChange={e => setFldY(activePlot,'harvest_cover',yr,'harvest',e.target.value)}><option value="">Επιλέξτε...</option>{MONTHS.map(m => <option key={m}>{m}</option>)}</select></div>
+                        <div className="field"><label>Απόδοση (kg/ha)</label><input type="number" placeholder="π.χ. 1500" value={fyv(activePlot,'harvest_cover',yr,'yield')} onChange={e => setFldY(activePlot,'harvest_cover',yr,'yield',e.target.value)} /></div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+              {activeFieldSection === 'fertilizer_n' && (
+                <>
+                  <div className="step-title">🧪 Αζωτούχα Λιπάσματα — Αγροτεμάχιο {activePlot}</div>
+                  <div className="step-sub">Τύπος, μήνας εφαρμογής και ποσότητα ανά έτος.</div>
+                  {YEARS.map(yr => (
+                    <div className="year-block" key={yr}>
+                      <div className="year-badge">{yr}</div>
+                      <div className="row3">
+                        <div className="field"><label>Τύπος λιπάσματος</label><select value={fyv(activePlot,'fertilizer_n',yr,'type')} onChange={e => setFldY(activePlot,'fertilizer_n',yr,'type',e.target.value)}><option value="">Επιλέξτε...</option>{['Στερεό','Υγρό','Αργής αποδέσμευσης','Ουρία','Θειική αμμωνία'].map(t => <option key={t}>{t}</option>)}</select></div>
+                        <div className="field"><label>Μήνας εφαρμογής</label><select value={fyv(activePlot,'fertilizer_n',yr,'month')} onChange={e => setFldY(activePlot,'fertilizer_n',yr,'month',e.target.value)}><option value="">Επιλέξτε...</option>{MONTHS.map(m => <option key={m}>{m}</option>)}</select></div>
+                        <div className="field"><label>Ποσότητα (kg/ha)</label><input type="number" placeholder="π.χ. 96" value={fyv(activePlot,'fertilizer_n',yr,'qty')} onChange={e => setFldY(activePlot,'fertilizer_n',yr,'qty',e.target.value)} /></div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+              {activeFieldSection === 'fertilizer_org' && (
+                <>
+                  <div className="step-title">🌿 Οργανικά Λιπάσματα — Αγροτεμάχιο {activePlot}</div>
+                  <div className="step-sub">Τύπος, μήνας εφαρμογής και ποσότητα ανά έτος.</div>
+                  {YEARS.map(yr => (
+                    <div className="year-block" key={yr}>
+                      <div className="year-badge">{yr}</div>
+                      <div className="row3">
+                        <div className="field"><label>Τύπος οργανικού λιπάσματος</label><select value={fyv(activePlot,'fertilizer_org',yr,'type')} onChange={e => setFldY(activePlot,'fertilizer_org',yr,'type',e.target.value)}><option value="">Επιλέξτε...</option>{['Κομπόστ','Κοπριά βοοειδών','Κοπριά χοίρων','Κοπριά πουλερικών','Πράσινη λίπανση','Άλλο'].map(t => <option key={t}>{t}</option>)}</select></div>
+                        <div className="field"><label>Μήνας εφαρμογής</label><select value={fyv(activePlot,'fertilizer_org',yr,'month')} onChange={e => setFldY(activePlot,'fertilizer_org',yr,'month',e.target.value)}><option value="">Επιλέξτε...</option>{MONTHS.map(m => <option key={m}>{m}</option>)}</select></div>
+                        <div className="field"><label>Ποσότητα (kg/ha)</label><input type="number" placeholder="π.χ. 500" value={fyv(activePlot,'fertilizer_org',yr,'qty')} onChange={e => setFldY(activePlot,'fertilizer_org',yr,'qty',e.target.value)} /></div>
+                      </div>
+                    </div>
+                  ))}
                 </>
               )}
 
               <div className="nav">
-                {step > 1 && <button className="btn-back" onClick={prev}>← Πίσω</button>}
-                {step < TOTAL_STEPS ? (
-                  <button className="btn-next" onClick={next}>Συνέχεια →</button>
+                {FIELD_SECTIONS.findIndex(s => s.key === activeFieldSection) > 0 && (
+                  <button className="btn-back" onClick={() => setActiveFieldSection(FIELD_SECTIONS[FIELD_SECTIONS.findIndex(s => s.key === activeFieldSection) - 1].key)}>← Προηγούμενο</button>
+                )}
+                {FIELD_SECTIONS.findIndex(s => s.key === activeFieldSection) < FIELD_SECTIONS.length - 1 ? (
+                  <button className="btn-next" onClick={() => setActiveFieldSection(FIELD_SECTIONS[FIELD_SECTIONS.findIndex(s => s.key === activeFieldSection) + 1].key)}>Επόμενο →</button>
+                ) : activePlot < numPlots ? (
+                  <button className="btn-next" onClick={() => { setActivePlot(p => p + 1); setActiveFieldSection('info'); }}>Αγροτεμάχιο {activePlot + 1} →</button>
                 ) : (
-                  <button className="btn-next" onClick={submit} disabled={loading}>
-                    {loading ? 'Αποστολή...' : 'Υποβολή ✓'}
-                  </button>
+                  <button className="btn-next" onClick={submitAll} disabled={loading}>{loading ? 'Υποβολή...' : 'Υποβολή φόρμας ✓'}</button>
                 )}
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
+
+        {/* ====== DONE ====== */}
+        {phase === 'done' && (
+          <div className="card" style={{textAlign:'center',padding:'3rem 2rem'}}>
+            <div className="success-icon">✅</div>
+            <h2 style={{color:'#1a3d2b',fontSize:'20px',marginBottom:'8px'}}>Σας ευχαριστούμε!</h2>
+            <p style={{color:'#666',fontSize:'14px',lineHeight:'1.6'}}>Λάβαμε όλα τα στοιχεία σας. Θα επικοινωνήσουμε μαζί σας σύντομα.</p>
+            <div className="summary">
+              {[
+                ['Τύπος οντότητας', onb.type],
+                ['Ονοματεπώνυμο', onb.orgName || `${onb.firstName} ${onb.lastName}`],
+                ['Email', onb.email],
+                ['Περιοχή', onb.region],
+                ['Έκταση', onb.hectares ? `${onb.hectares} ha · ${onb.plots} αγροτεμάχια` : '—'],
+                ['Καλλιέργειες', onb.crops.join(', ') || '—'],
+                ['Εξοπλισμός', onb.equipment.join(', ') || '—'],
+              ].map(([k, v]) => (
+                <div className="sum-row" key={k}><span className="sum-k">{k}</span><span className="sum-v">{v || '—'}</span></div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
