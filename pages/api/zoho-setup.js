@@ -1,11 +1,9 @@
-// pages/api/zoho-setup.js
 // Run this ONCE to create the 3 main folders and get their IDs
 // Visit: https://roc-onboarding.vercel.app/api/zoho-setup?secret=roc2026setup
 
-import { getAccessToken, getTeams, getWorkspaces, createFolder } from "../../lib/zoho";
+import { getAccessToken, createFolder } from "../../lib/zoho";
 
 export default async function handler(req, res) {
-  // Simple security: require a secret param so only you can run this
   if (req.query.secret !== "roc2026setup") {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -13,37 +11,32 @@ export default async function handler(req, res) {
   try {
     const accessToken = await getAccessToken();
 
-    // Step 1: Get teams
-    const teams = await getTeams(accessToken);
-    if (!teams || teams.length === 0) {
-      return res.status(500).json({ error: "No teams found" });
-    }
-    const team = teams[0]; // Use first team
-    const teamId = team.id;
+    // Get the root workspace ID directly
+    const wsRes = await fetch("https://workdrive.zoho.eu/api/v1/privatespace", {
+      headers: { Authorization: "Zoho-oauthtoken " + accessToken },
+    });
+    const wsData = await wsRes.json();
+    console.log("privatespace response:", JSON.stringify(wsData));
 
-    // Step 2: Get workspaces
-    const workspaces = await getWorkspaces(accessToken, teamId);
-    if (!workspaces || workspaces.length === 0) {
-      return res.status(500).json({ error: "No workspaces found" });
+    if (!wsData.data) {
+      return res.status(500).json({ error: "No privatespace found", raw: wsData });
     }
-    const workspace = workspaces[0]; // Use first workspace
-    const workspaceId = workspace.attributes.workspace_id;
 
-    // Step 3: Create the 3 main folders
+    const parentId = wsData.data.id;
+
+    // Create the 3 main folders
     const folders = ["Αγρότης", "Συνεταιρισμός", "Εταιρεία"];
     const createdFolders = {};
 
     for (const folderName of folders) {
-      const folder = await createFolder(accessToken, workspaceId, folderName);
+      const folder = await createFolder(accessToken, parentId, folderName);
       createdFolders[folderName] = folder.id;
     }
 
-    // Return the IDs — COPY THESE INTO YOUR .env.local !
     return res.status(200).json({
       success: true,
-      message: "Folders created! Copy these IDs to your .env.local",
-      teamId,
-      workspaceId,
+      message: "Folders created! Copy these IDs to your Vercel env vars",
+      parentId,
       folderIds: createdFolders,
     });
   } catch (err) {
