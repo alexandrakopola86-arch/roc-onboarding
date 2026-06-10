@@ -8,13 +8,13 @@ export default async function handler(req, res) {
   try {
     const accessToken = await getAccessToken();
 
-    // Try workspaces endpoint
-    const wsRes = await fetch("https://workdrive.zoho.eu/api/v1/workspaces", {
+    // Get user's own WorkDrive info
+    const r1 = await fetch("https://workdrive.zoho.eu/api/v1/users/me", {
       headers: { Authorization: "Zoho-oauthtoken " + accessToken },
     });
-    const wsData = await wsRes.json();
+    const d1 = await r1.json();
 
-    return res.status(200).json({ debug: wsData });
+    return res.status(200).json({ debug: d1 });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
