@@ -19,7 +19,9 @@ export default async function handler(req, res) {
     const body = req.body;
 
     // Extract the key fields from the form submission
-    const userType = body.userType; // "farmer" | "cooperative" | "company"
+    const rawType = body.onboarding?.type || body.userType || "";
+  const typeMap = { "Μεμονωμένος αγρότης": "farmer", "Αγρότης": "farmer", "Συνεταιρισμός": "cooperative", "Εταιρεία": "company" };
+  const userType = typeMap[rawType] || rawType; // "farmer" | "cooperative" | "company"
     const name =
       body.fullName ||        // Αγρότης: πλήρες όνομα
       body.cooperativeName || // Συνεταιρισμός: όνομα συνεταιρισμού
