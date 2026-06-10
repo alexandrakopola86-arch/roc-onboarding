@@ -1,4 +1,4 @@
-// pages/api/submit.js
+ς// pages/api/submit.js
 // Called when the form is submitted — creates a subfolder in the right Zoho folder
 
 import { getAccessToken, createFolder, listFiles } from "../../lib/zoho";
@@ -22,8 +22,9 @@ export default async function handler(req, res) {
     const rawType = body.onboarding?.type || body.userType || "";
   const typeMap = { "Μεμονωμένος αγρότης": "farmer", "Αγρότης": "farmer", "Συνεταιρισμός": "cooperative", "Εταιρεία": "company" };
   const userType = typeMap[rawType] || rawType; // "farmer" | "cooperative" | "company"
-    const name =
-      body.fullName ||        // Αγρότης: πλήρες όνομα
+    
+χconst name =
+      body.fullName || (body.onboarding?.firstName ? body.onboarding.firstName + " " + (body.onboarding.lastName || "") : null) || // Αγρότης: πλήρες όνομα
       body.cooperativeName || // Συνεταιρισμός: όνομα συνεταιρισμού
       body.companyName ||     // Εταιρεία: όνομα εταιρείας
       "Άγνωστος";
