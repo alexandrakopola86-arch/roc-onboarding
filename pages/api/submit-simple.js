@@ -48,7 +48,7 @@ function yearTable(years, columns) {
   </td></tr>`;
 }
 
-function buildHtml(onb, eq, fields) {
+function buildHtml(onb, eq, fields, fileNames) {
   const name = onb.firstName
     ? `${onb.firstName} ${onb.lastName || ''}`.trim()
     : onb.orgName || '—';
@@ -67,7 +67,7 @@ function buildHtml(onb, eq, fields) {
     ${kv('Email', onb.email)}
     ${kv('Τηλέφωνο', onb.phone)}
     ${kv('Νομός / Περιφέρεια', onb.region)}
-    ${kv('Συνολική έκταση', onb.hectares ? `${onb.hectares} ha` : '')}
+    ${kv('Συνολική έκταση', onb.hectares ? `${onb.hectares} στρέμματα` : '')}
     ${kv('Αριθμός αγροτεμαχίων', onb.plots)}
     ${kv('Καλλιέργειες', onb.crops)}
     ${kv('Εξοπλισμός', onb.equipment)}
@@ -77,6 +77,13 @@ function buildHtml(onb, eq, fields) {
     ${kv('Γεωπόνος / Σύμβουλος', onb.agronomist)}
     ${kv('Πηγή πληροφόρησης', onb.source)}
     ${onb.comments ? kv('Σχόλια', onb.comments) : ''}
+    ${onb.companyRepName ? kv('Εκπρόσωπος εταιρείας', onb.companyRepName) : ''}
+    ${(onb.memberFirstName || onb.memberLastName) ? kv('Εκπρόσωπος συνεταιρισμού', `${onb.memberFirstName || ''} ${onb.memberLastName || ''}`.trim()) : ''}
+    ${(onb.ownerFirstName || onb.ownerLastName) ? kv('Ιδιοκτήτης αγροτεμαχίου', `${onb.ownerFirstName || ''} ${onb.ownerLastName || ''}`.trim()) : ''}
+    ${onb.agronomistNumber ? kv('Αρ. μητρώου γεωπόνου', onb.agronomistNumber) : ''}
+    ${onb.carbonValue ? kv('Τιμή αποτυπώματος CO₂', `${onb.carbonValue} tCO₂e/στρέμμα`) : ''}
+    ${fileNames?.agronomist ? kv('Αρχείο γεωπόνου', fileNames.agronomist) : ''}
+    ${fileNames?.carbon ? kv('Αρχείο μέτρησης CO₂', fileNames.carbon) : ''}
   `);
 
   // ── Section 2: Εξοπλισμός ──
@@ -114,10 +121,10 @@ function buildHtml(onb, eq, fields) {
   const YEAR_SECS = [
     { key: 'tillage', label: 'Κατεργασία', cols: [{ key: 'type', label: 'Τύπος' }, { key: 'month', label: 'Μήνας' }, { key: 'depth', label: 'Βάθος (cm)' }] },
     { key: 'crops', label: 'Καλλιέργειες', cols: [{ key: 'main', label: 'Κύρια' }, { key: 'cover', label: 'Δευτερεύουσα' }, { key: 'herbicides', label: 'Ζιζανιοκτόνα' }] },
-    { key: 'harvest_main', label: 'Συγκομιδή Κύρια', cols: [{ key: 'sow', label: 'Σπορά' }, { key: 'harvest', label: 'Συγκομιδή' }, { key: 'yield', label: 'Απόδοση (kg/ha)' }] },
-    { key: 'harvest_cover', label: 'Συγκομιδή Επίσπορη', cols: [{ key: 'sow', label: 'Σπορά' }, { key: 'harvest', label: 'Συγκομιδή' }, { key: 'yield', label: 'Απόδοση (kg/ha)' }] },
-    { key: 'fertilizer_n', label: 'Αζωτούχα Λιπάσματα', cols: [{ key: 'type', label: 'Τύπος' }, { key: 'month', label: 'Μήνας' }, { key: 'qty', label: 'Ποσότητα (kg/ha)' }] },
-    { key: 'fertilizer_org', label: 'Οργανικά Λιπάσματα', cols: [{ key: 'type', label: 'Τύπος' }, { key: 'month', label: 'Μήνας' }, { key: 'qty', label: 'Ποσότητα (kg/ha)' }] },
+    { key: 'harvest_main', label: 'Συγκομιδή Κύρια', cols: [{ key: 'sow', label: 'Σπορά' }, { key: 'harvest', label: 'Συγκομιδή' }, { key: 'yield', label: 'Απόδοση (kg/στρέμμα)' }] },
+    { key: 'harvest_cover', label: 'Συγκομιδή Επίσπορη', cols: [{ key: 'sow', label: 'Σπορά' }, { key: 'harvest', label: 'Συγκομιδή' }, { key: 'yield', label: 'Απόδοση (kg/στρέμμα)' }] },
+    { key: 'fertilizer_n', label: 'Αζωτούχα Λιπάσματα', cols: [{ key: 'type', label: 'Τύπος' }, { key: 'month', label: 'Μήνας' }, { key: 'qty', label: 'Ποσότητα (kg/στρέμμα)' }] },
+    { key: 'fertilizer_org', label: 'Οργανικά Λιπάσματα', cols: [{ key: 'type', label: 'Τύπος' }, { key: 'month', label: 'Μήνας' }, { key: 'qty', label: 'Ποσότητα (kg/στρέμμα)' }] },
   ];
 
   let s3rows = secHeader(s3num, 'Αγροτεμάχια');
@@ -130,10 +137,14 @@ function buildHtml(onb, eq, fields) {
         Αγροτεμάχιο ${esc(pNum)}
       </td></tr>`;
       const info = plotData.info || {};
+      const pKey = plotKey; // e.g. 'p1'
       [
         ['Περιοχή', info.region],
-        ['Έκταση', info.area ? `${info.area} ha` : ''],
-        ['GIS', info.gis],
+        ['Έκταση', info.area ? `${info.area} στρέμματα` : ''],
+        ['GIS link', info.gis_link],
+        ['GIS αρχείο', fileNames?.gis?.[pKey] || null],
+        ['Εδαφολογική (link)', info.soil_link],
+        ['Εδαφολογική (αρχείο)', fileNames?.soil?.[pKey] || null],
         ['Τύπος εδάφους', info.soil_type],
         ['Αρδευόμενο', info.irrigated],
         ['Έξυπνη άρδευση', info.smart_irr],
@@ -141,10 +152,12 @@ function buildHtml(onb, eq, fields) {
         info.grazing === 'Ναι' ? ['Αριθμός ζώων', info.animals] : null,
         ['Διαχείριση υπολειμμάτων', info.residues],
         ['Εφαρμογή ασβέστη', info.lime],
-        info.lime === 'Ναι' ? ['Ποσότητα ασβέστη', info.lime_qty ? `${info.lime_qty} kg/ha` : ''] : null,
+        info.lime === 'Ναι' ? ['Ποσότητα ασβέστη', info.lime_qty ? `${info.lime_qty} tn/στρέμμα` : ''] : null,
         ['Cover crops', info.cover_crops],
         ['Εδαφολογική ανάλυση', info.soil_analysis],
         info.notes ? ['Σχόλια', info.notes] : null,
+        fileNames?.cert?.[pKey] ? ['Αρχείο πιστοποίησης', fileNames.cert[pKey]] : null,
+        ...(fileNames?.legal?.[pKey] || []).map((fn, i) => [`ΟΣΔΕ αρχείο ${i + 1}`, fn]),
       ].filter(Boolean).forEach(([k, v]) => { s3rows += kv(k, v); });
 
       YEAR_SECS.forEach(sec => {
@@ -195,6 +208,7 @@ export default async function handler(req, res) {
     const onb = body.onboarding || {};
     const eq = body.equipment || {};
     const fields = body.fields || {};
+    const fileNames = body.fileNames || {};
     const name = onb.firstName
       ? `${onb.firstName} ${onb.lastName || ''}`.trim()
       : onb.orgName || 'Αγνωστος';
@@ -215,7 +229,7 @@ EMAIL: ${onb.email || '-'}
 ΤΗΛΕΦΩΝΟ: ${onb.phone || '-'}
 ΠΕΡΙΟΧΗ: ${onb.region || '-'}
 ΜΕΓΕΘΟΣ: ${onb.farm_size || '-'}
-ΕΚΤΑΣΗ: ${onb.hectares || '-'} ha
+ΕΚΤΑΣΗ: ${onb.hectares || '-'} στρέμματα
 ΑΓΡΟΤΕΜΑΧΙΑ: ${onb.plots || '-'}
 ΚΙΝΗΤΡΟ: ${onb.motivation || '-'}
 ΕΞΟΠΛΙΣΜΟΣ: ${(onb.equipment || []).toString() || '-'}
@@ -254,7 +268,7 @@ EMAIL: ${onb.email || '-'}
         from: `"Roots of Carbon" <${process.env.ZOHO_SMTP_USER}>`,
         to: 'info@rootsofcarbon.gr',
         subject: `Νέα Εγγραφή: ${name} — ${new Date().toLocaleDateString('el-GR')}`,
-        html: buildHtml(onb, eq, fields),
+        html: buildHtml(onb, eq, fields, fileNames),
       });
     }
 

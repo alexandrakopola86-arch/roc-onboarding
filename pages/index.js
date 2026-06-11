@@ -73,8 +73,7 @@ const EQUIPMENT_SCHEMAS = {
   'Άλλος εξοπλισμός': { icon: '🔧',
     instanceFields: [
       { key: 'type', label: 'Είδος εξοπλισμού', type: 'text', placeholder: 'π.χ. Μπαλιαστικό' },
-      { key: 'capacity', label: 'Χωρητικότητα (κιλά)', type: 'number', placeholder: 'π.χ. 500' },
-      { key: 'hp', label: 'Ιπποδύναμη (HP)', type: 'number', placeholder: 'π.χ. 80' },
+      { key: 'description', label: 'Περιγραφή εξοπλισμού', type: 'text', placeholder: 'π.χ. Πλάτος 1.5μ, έτος κατασκευής 2010' },
     ],
     yearlyFields: [{ key: 'hours', label: 'Ώρες λειτουργίας' },{ key: 'stremata', label: 'Στρέμματα εφαρμογής' }] },
 };
@@ -163,8 +162,10 @@ export default function Home() {
   const [onb, setOnb] = useState({
     type: '', firstName: '', lastName: '', email: '', phone: '', orgName: '',
     region: '', hectares: '', plots: '', crops: [], equipment: [],
-    agronomist: '', source: '', comments: '', farm_size: '', carbon_measured: '', motivation: '',
+    agronomist: '', agronomistNumber: '', source: '', comments: '', farm_size: '', carbon_measured: '', carbonValue: '', motivation: '',
     memberFirstName: '', memberLastName: '', memberEmail: '', memberPhone: '', memberRole: '',
+    ownerFirstName: '', ownerLastName: '', ownerEmail: '', ownerPhone: '',
+    companyRepName: '',
   });
   const [activeEquip, setActiveEquip] = useState(null);
   const [equipData, setEquipData] = useState({});
@@ -180,6 +181,10 @@ export default function Home() {
   const [submittedAt, setSubmittedAt] = useState(null);
   const [certFiles, setCertFiles] = useState({});
   const [gisFiles, setGisFiles] = useState({});
+  const [soilFiles, setSoilFiles] = useState({});
+  const [legalFiles, setLegalFiles] = useState({});
+  const [agronomistFile, setAgronomistFile] = useState(null);
+  const [carbonFile, setCarbonFile] = useState(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -205,7 +210,7 @@ export default function Home() {
       email: 'test@rootsofcarbon.gr', phone: '6901234567', orgName: '',
       region: 'Αττική', hectares: '5', plots: '1',
       crops: ['Ελιά'], equipment: ['Ελκυστήρας'],
-      farm_size: 'Μικρός παραγωγός (έως 10 ha)',
+      farm_size: 'Μικρός παραγωγός (έως 100 στρέμματα)',
       motivation: 'Carbon credits',
       carbon_measured: 'Όχι, είναι η πρώτη φορά',
       agronomist: 'Όχι', source: 'Αναζήτηση στο διαδίκτυο', comments: '',
@@ -322,6 +327,12 @@ export default function Home() {
         if (!onb.orgName) e.orgName = true;
         if (!onb.memberFirstName) e.memberFirstName = true;
         if (!onb.memberLastName) e.memberLastName = true;
+        if (!onb.ownerFirstName) e.ownerFirstName = true;
+        if (!onb.ownerLastName) e.ownerLastName = true;
+      }
+      if (onb.type === 'Εταιρεία') {
+        if (!onb.orgName) e.orgName = true;
+        if (!onb.companyRepName) e.companyRepName = true;
       }
     }
     if (step === 3) { if (!onb.region) e.region = true; if (!onb.hectares) e.hectares = true; if (!onb.plots) e.plots = true; }
@@ -406,7 +417,15 @@ export default function Home() {
   const submitAll = async () => {
     setLoading(true);
     try {
-      await fetch('/api/submit-simple', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboarding: onb, equipment: equipData, fields: fieldData }) });
+      const fileNames = {
+        gis: Object.fromEntries(Object.entries(gisFiles).map(([k, f]) => [k, f?.name || null])),
+        soil: Object.fromEntries(Object.entries(soilFiles).map(([k, f]) => [k, f?.name || null])),
+        cert: Object.fromEntries(Object.entries(certFiles).map(([k, f]) => [k, f?.name || null])),
+        legal: Object.fromEntries(Object.entries(legalFiles).map(([k, files]) => [k, (files || []).map(f => f.name)])),
+        agronomist: agronomistFile?.name || null,
+        carbon: carbonFile?.name || null,
+      };
+      await fetch('/api/submit-simple', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboarding: onb, equipment: equipData, fields: fieldData, fileNames }) });
       setSubmittedAt(new Date());
       setPhase('done');
     } catch (e) { console.error(e); }
@@ -566,39 +585,76 @@ export default function Home() {
                 </div>
                 {onb.type !== 'Μεμονωμένος αγρότης' && (
                   <div className="field">
-                    <label>Επωνυμία {onb.type === 'Αγροτικός συνεταιρισμός' ? 'συνεταιρισμού' : 'εταιρείας'} {onb.type === 'Αγροτικός συνεταιρισμός' ? <span className="required">*</span> : null}</label>
-                    <input className={onbErrors.orgName ? 'err' : ''} value={onb.orgName} onChange={e => setOnbField('orgName', e.target.value)} placeholder="π.χ. ΑΣ Οροπεδίου Φολόης" />
-                    {onbErrors.orgName && <div className="err-msg">Παρακαλούμε εισάγετε την επωνυμία του συνεταιρισμού.</div>}
+                    <label>Επωνυμία {onb.type === 'Αγροτικός συνεταιρισμός' ? 'συνεταιρισμού' : 'εταιρείας'} <span className="required">*</span></label>
+                    <input className={onbErrors.orgName ? 'err' : ''} value={onb.orgName} onChange={e => setOnbField('orgName', e.target.value)} placeholder={onb.type === 'Αγροτικός συνεταιρισμός' ? 'π.χ. ΑΣ Οροπεδίου Φολόης' : 'π.χ. ΑΒΓΕ ΑΕ'} />
+                    {onbErrors.orgName && <div className="err-msg">Παρακαλούμε εισάγετε την επωνυμία.</div>}
+                  </div>
+                )}
+                {onb.type === 'Εταιρεία' && (
+                  <div className="member-box">
+                    <div className="member-box-header">🏢 Στοιχεία εκπροσώπου εταιρείας</div>
+                    <div className="field">
+                      <label>Ονοματεπώνυμο εκπροσώπου <span className="required">*</span></label>
+                      <input className={onbErrors.companyRepName ? 'err' : ''} value={onb.companyRepName} onChange={e => setOnbField('companyRepName', e.target.value)} placeholder="π.χ. Μαρία Παπανικολάου" />
+                      {onbErrors.companyRepName && <div className="err-msg">Παρακαλούμε εισάγετε ονοματεπώνυμο εκπροσώπου.</div>}
+                    </div>
                   </div>
                 )}
                 {onb.type === 'Αγροτικός συνεταιρισμός' && (
-                  <div className="member-box">
-                    <div className="member-box-header">👤 Στοιχεία μέλους / ιδιοκτήτη αγροτεμαχίου</div>
-                    <div className="row2">
-                      <div className="field">
-                        <label>Όνομα μέλους <span className="required">*</span></label>
-                        <input className={onbErrors.memberFirstName ? 'err' : ''} value={onb.memberFirstName} onChange={e => setOnbField('memberFirstName', e.target.value)} placeholder="π.χ. Κώστας" />
+                  <>
+                    <div className="member-box">
+                      <div className="member-box-header">👤 Στοιχεία εκπροσώπου</div>
+                      <div className="row2">
+                        <div className="field">
+                          <label>Όνομα εκπροσώπου <span className="required">*</span></label>
+                          <input className={onbErrors.memberFirstName ? 'err' : ''} value={onb.memberFirstName} onChange={e => setOnbField('memberFirstName', e.target.value)} placeholder="π.χ. Κώστας" />
+                        </div>
+                        <div className="field">
+                          <label>Επώνυμο εκπροσώπου <span className="required">*</span></label>
+                          <input className={onbErrors.memberLastName ? 'err' : ''} value={onb.memberLastName} onChange={e => setOnbField('memberLastName', e.target.value)} placeholder="π.χ. Νικολάου" />
+                        </div>
+                      </div>
+                      <div className="row2">
+                        <div className="field">
+                          <label>Email εκπροσώπου</label>
+                          <input type="email" value={onb.memberEmail} onChange={e => setOnbField('memberEmail', e.target.value)} placeholder="email@example.com" />
+                        </div>
+                        <div className="field">
+                          <label>Τηλέφωνο εκπροσώπου</label>
+                          <input type="tel" value={onb.memberPhone} onChange={e => setOnbField('memberPhone', e.target.value)} placeholder="π.χ. 6971234567" />
+                        </div>
                       </div>
                       <div className="field">
-                        <label>Επώνυμο μέλους <span className="required">*</span></label>
-                        <input className={onbErrors.memberLastName ? 'err' : ''} value={onb.memberLastName} onChange={e => setOnbField('memberLastName', e.target.value)} placeholder="π.χ. Νικολάου" />
+                        <label>Ρόλος / θέση στον συνεταιρισμό</label>
+                        <input value={onb.memberRole} onChange={e => setOnbField('memberRole', e.target.value)} placeholder="π.χ. Πρόεδρος, Γεν. Γραμματέας" />
                       </div>
                     </div>
-                    <div className="row2">
-                      <div className="field">
-                        <label>Email μέλους</label>
-                        <input type="email" value={onb.memberEmail} onChange={e => setOnbField('memberEmail', e.target.value)} placeholder="email@example.com" />
+                    <div className="member-box" style={{ marginTop: '12px' }}>
+                      <div className="member-box-header">🏡 Στοιχεία ιδιοκτήτη αγροτεμαχίου</div>
+                      <div className="row2">
+                        <div className="field">
+                          <label>Όνομα ιδιοκτήτη <span className="required">*</span></label>
+                          <input className={onbErrors.ownerFirstName ? 'err' : ''} value={onb.ownerFirstName} onChange={e => setOnbField('ownerFirstName', e.target.value)} placeholder="π.χ. Γιώργος" />
+                          {onbErrors.ownerFirstName && <div className="err-msg">Υποχρεωτικό πεδίο.</div>}
+                        </div>
+                        <div className="field">
+                          <label>Επώνυμο ιδιοκτήτη <span className="required">*</span></label>
+                          <input className={onbErrors.ownerLastName ? 'err' : ''} value={onb.ownerLastName} onChange={e => setOnbField('ownerLastName', e.target.value)} placeholder="π.χ. Παπαδόπουλος" />
+                          {onbErrors.ownerLastName && <div className="err-msg">Υποχρεωτικό πεδίο.</div>}
+                        </div>
                       </div>
-                      <div className="field">
-                        <label>Τηλέφωνο μέλους</label>
-                        <input type="tel" value={onb.memberPhone} onChange={e => setOnbField('memberPhone', e.target.value)} placeholder="π.χ. 6971234567" />
+                      <div className="row2">
+                        <div className="field">
+                          <label>Email ιδιοκτήτη</label>
+                          <input type="email" value={onb.ownerEmail} onChange={e => setOnbField('ownerEmail', e.target.value)} placeholder="email@example.com" />
+                        </div>
+                        <div className="field">
+                          <label>Τηλέφωνο ιδιοκτήτη</label>
+                          <input type="tel" value={onb.ownerPhone} onChange={e => setOnbField('ownerPhone', e.target.value)} placeholder="π.χ. 6981234567" />
+                        </div>
                       </div>
                     </div>
-                    <div className="field">
-                      <label>Ρόλος / θέση στον συνεταιρισμό</label>
-                      <input value={onb.memberRole} onChange={e => setOnbField('memberRole', e.target.value)} placeholder="π.χ. Μέλος, Πρόεδρος" />
-                    </div>
-                  </div>
+                  </>
                 )}
               </>)}
 
@@ -607,7 +663,7 @@ export default function Home() {
                 <div className="step-sub">Πού βρίσκονται τα αγροτεμάχιά σας;</div>
                 <div className="field"><label>Νομός / Περιφέρεια <span className="required">*</span></label><select className={onbErrors.region ? 'err' : ''} value={onb.region} onChange={e => setOnbField('region', e.target.value)}><option value="">Επιλέξτε...</option>{REGIONS.map(r => <option key={r}>{r}</option>)}</select></div>
                 <div className="row2">
-                  <div className="field"><label>Συνολική έκταση (ha) <span className="required">*</span></label><input className={onbErrors.hectares ? 'err' : ''} type="number" min="0" step="0.1" value={onb.hectares} onChange={e => setOnbField('hectares', e.target.value)} placeholder="π.χ. 15" /><div className="hint">1 ha = 10 στρέμματα</div></div>
+                  <div className="field"><label>Συνολική έκταση (στρέμματα) <span className="required">*</span></label><input className={onbErrors.hectares ? 'err' : ''} type="number" min="0" step="0.1" value={onb.hectares} onChange={e => setOnbField('hectares', e.target.value)} placeholder="π.χ. 150" /></div>
                   <div className="field"><label>Αριθμός αγροτεμαχίων <span className="required">*</span></label><input className={onbErrors.plots ? 'err' : ''} type="number" min="1" step="1" value={onb.plots} onChange={e => setOnbField('plots', e.target.value)} placeholder="π.χ. 3" /></div>
                 </div>
                 {(onbErrors.region || onbErrors.hectares || onbErrors.plots) && <div className="err-msg">Παρακαλούμε συμπληρώστε όλα τα υποχρεωτικά πεδία.</div>}
@@ -644,7 +700,7 @@ export default function Home() {
                 <div className="field">
                   <label>Μέγεθος γεωργικής εκμετάλλευσης</label>
                   <div className="radio-group" style={{marginTop:'6px'}}>
-                    {['Μικρός παραγωγός (έως 10 ha)','Μεσαίος παραγωγός (10–50 ha)','Μεγάλος παραγωγός (άνω των 50 ha)'].map(o => (
+                    {['Μικρός παραγωγός (έως 100 στρέμματα)','Μεσαίος παραγωγός (100–500 στρέμματα)','Μεγάλος παραγωγός (άνω των 500 στρεμμάτων)'].map(o => (
                       <div key={o} className={`radio-item ${onb.farm_size === o ? 'sel' : ''}`} onClick={() => setOnbField('farm_size', o)}>
                         <div className="radio-dot"><div className="radio-inner" /></div><span>{o}</span>
                       </div>
@@ -673,6 +729,22 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
+                {(onb.carbon_measured === 'Ναι, έχω επίσημη μέτρηση' || onb.carbon_measured === 'Ναι, κατά προσέγγιση') && (
+                  <div style={{ marginTop: '1.25rem', background: '#f0f7ec', borderRadius: '8px', padding: '1rem', border: '1px solid #c8e0b4' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a3d2b', marginBottom: '0.75rem' }}>Στοιχεία μέτρησης</div>
+                    <div className="field">
+                      <label>Εκτιμώμενη τιμή αποτυπώματος (tCO₂e/στρέμμα)</label>
+                      <input type="number" step="0.01" placeholder="π.χ. 0.45" value={onb.carbonValue} onChange={e => setOnbField('carbonValue', e.target.value)} />
+                    </div>
+                    {onb.carbon_measured === 'Ναι, έχω επίσημη μέτρηση' && (
+                      <div className="field">
+                        <label>Αρχείο επίσημης μέτρησης (.pdf)</label>
+                        <input type="file" accept=".pdf,.doc,.docx" style={{ padding: '8px 0', border: 'none' }} onChange={e => setCarbonFile(e.target.files[0])} />
+                        {carbonFile && <div style={{ fontSize: '12px', color: '#4a8c2a', marginTop: '4px' }}>✓ {carbonFile.name}</div>}
+                      </div>
+                    )}
+                  </div>
+                )}
               </>)}
 
               {onbStep === 8 && (<>
@@ -688,6 +760,23 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
+                {(onb.agronomist === 'Ναι, τακτικά' || onb.agronomist === 'Ναι, περιστασιακά') && (
+                  <div style={{ background: '#f0f7ec', borderRadius: '8px', padding: '1rem', border: '1px solid #c8e0b4', marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a3d2b', marginBottom: '0.75rem' }}>Στοιχεία γεωπόνου / συμβούλου</div>
+                    <div className="field">
+                      <label>Αριθμός μητρώου (ΓΕΩΤΕΕ)</label>
+                      <input type="text" placeholder="π.χ. 12345" value={onb.agronomistNumber} onChange={e => setOnbField('agronomistNumber', e.target.value)} />
+                    </div>
+                    {!onb.agronomistNumber && (
+                      <div className="field">
+                        <label>Αρχείο συνεργασίας (pdf) <span className="required">*</span></label>
+                        <input type="file" accept=".pdf,.doc,.docx" style={{ padding: '8px 0', border: 'none' }} onChange={e => setAgronomistFile(e.target.files[0])} />
+                        {agronomistFile && <div style={{ fontSize: '12px', color: '#4a8c2a', marginTop: '4px' }}>✓ {agronomistFile.name}</div>}
+                        <div className="hint">Απαιτείται εάν δεν διαθέτετε αριθμό ΓΕΩΤΕΕ.</div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="field" style={{marginTop:'1.25rem'}}>
                   <label>Πώς πληροφορηθήκατε για την Roots of Carbon;</label>
                   <div className="radio-group" style={{marginTop:'6px'}}>
@@ -827,11 +916,22 @@ export default function Home() {
                   <div style={{ marginTop: '8px' }}>
                     <label style={{ marginBottom: '4px' }}>Αρχείο KML/Shapefile</label>
                     <input type="file" accept=".kml,.shp,.zip" style={{ padding: '8px 0', border: 'none' }} onChange={e => setGisFiles(prev => ({ ...prev, [`p${activePlot}`]: e.target.files[0] }))} />
+                    {gisFiles[`p${activePlot}`] && <div style={{ fontSize: '12px', color: '#4a8c2a', marginTop: '4px' }}>✓ {gisFiles[`p${activePlot}`].name}</div>}
                   </div>
                 </div>
                 <div className="row2">
                   <div className="field"><label>Εδαφική ανάλυση</label><select value={fv(activePlot,'info','soil_analysis')} onChange={e => setFld(activePlot,'info','soil_analysis',e.target.value)}><option value="">Επιλέξτε...</option><option>Ναι</option><option>Όχι</option></select></div>
-                  {fv(activePlot,'info','soil_analysis') === 'Ναι' && <div className="field"><label>Link / αρχείο εδαφολογικής</label><input placeholder="π.χ. soilfile.pdf" value={fv(activePlot,'info','soil_file')} onChange={e => setFld(activePlot,'info','soil_file',e.target.value)} /></div>}
+                  {fv(activePlot,'info','soil_analysis') === 'Ναι' && (
+                    <div className="field">
+                      <label>Link εδαφολογικής ανάλυσης</label>
+                      <input placeholder="URL ή σύνδεσμος" value={fv(activePlot,'info','soil_link')} onChange={e => setFld(activePlot,'info','soil_link',e.target.value)} />
+                      <div style={{ marginTop: '6px' }}>
+                        <label style={{ fontSize: '12px', color: '#666', fontWeight: '400', marginBottom: '4px' }}>ή ανεβάστε αρχείο (.pdf, .jpg, .png)</label>
+                        <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ padding: '6px 0', border: 'none' }} onChange={e => setSoilFiles(prev => ({ ...prev, [`p${activePlot}`]: e.target.files[0] }))} />
+                        {soilFiles[`p${activePlot}`] && <div style={{ fontSize: '12px', color: '#4a8c2a', marginTop: '4px' }}>✓ {soilFiles[`p${activePlot}`].name}</div>}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="row2">
                   <div className="field">
@@ -899,16 +999,19 @@ export default function Home() {
                       </select>
                       {fv(activePlot,'info','pump_type') === 'Άλλο' && <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={fv(activePlot,'info','pump_type_other')} onChange={e => setFld(activePlot,'info','pump_type_other',e.target.value)} />}
                     </div>
-                    <div className="field">
-                      <label>Τύπος Καυσίμου *</label>
-                      <select required value={fv(activePlot,'info','fuel_type')} onChange={e => setFld(activePlot,'info','fuel_type',e.target.value)}>
-                        <option value="">Επιλέξτε...</option>
-                        {FUEL_TYPES.map(o => <option key={o}>{o}</option>)}
-                      </select>
-                      {fv(activePlot,'info','fuel_type') === 'Άλλο' && <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={fv(activePlot,'info','fuel_type_other')} onChange={e => setFld(activePlot,'info','fuel_type_other',e.target.value)} />}
-                    </div>
+                    {['Ηλεκτροκίνητη','Φωτοβολταϊκό/ΑΠΕ'].includes(fv(activePlot,'info','pump_type')) && (
+                      <div className="field">
+                        <label>Κατανάλωση ρεύματος (kWh/έτος) *</label>
+                        <input required type="number" placeholder="π.χ. 1200" value={fv(activePlot,'info','pump_kwh')} onChange={e => setFld(activePlot,'info','pump_kwh',e.target.value)} />
+                      </div>
+                    )}
+                    {['Πετρελαιοκίνητη (Diesel)','Βενζινοκίνητη','Άλλο'].includes(fv(activePlot,'info','pump_type')) && (
+                      <div className="field">
+                        <label>Κατανάλωση καυσίμου (λίτρα/έτος) *</label>
+                        <input required type="number" placeholder="π.χ. 800" value={fv(activePlot,'info','fuel_liters')} onChange={e => setFld(activePlot,'info','fuel_liters',e.target.value)} />
+                      </div>
+                    )}
                   </div>
-                  <div className="field"><label>Ετήσια κατανάλωση ενέργειας/καυσίμου *</label><input required type="number" placeholder="π.χ. 1200" value={fv(activePlot,'info','energy_consumption')} onChange={e => setFld(activePlot,'info','energy_consumption',e.target.value)} /></div>
                 </>)}
                 <div className="row2">
                   <div className="field"><label>Βόσκηση</label><select value={fv(activePlot,'info','grazing')} onChange={e => setFld(activePlot,'info','grazing',e.target.value)}><option value="">Επιλέξτε...</option><option>Ναι</option><option>Όχι</option></select></div>
@@ -977,6 +1080,7 @@ export default function Home() {
                   <div className="field">
                     <label>Αρχείο πιστοποίησης</label>
                     <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ padding: '8px 0', border: 'none' }} onChange={e => setCertFiles(prev => ({ ...prev, [`p${activePlot}`]: e.target.files[0] }))} />
+                    {certFiles[`p${activePlot}`] && <div style={{ fontSize: '12px', color: '#4a8c2a', marginTop: '4px' }}>✓ {certFiles[`p${activePlot}`].name}</div>}
                   </div>
                 </>)}
               </>)}
@@ -987,7 +1091,8 @@ export default function Home() {
                 <div className="step-sub">Δικαιολογητικά και υπεύθυνη δήλωση για τα αγροτεμάχια.</div>
                 <div className="field">
                   <label>ΟΣΔΕ / Ενοικιαστήρια (αρχεία)</label>
-                  <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style={{ padding: '8px 0', border: 'none' }} onChange={e => {}} />
+                  <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style={{ padding: '8px 0', border: 'none' }} onChange={e => { const files = Array.from(e.target.files); setLegalFiles(prev => ({ ...prev, [`p${activePlot}`]: files })); }} />
+                  {(legalFiles[`p${activePlot}`] || []).map(f => <div key={f.name} style={{ fontSize: '12px', color: '#4a8c2a', marginTop: '2px' }}>✓ {f.name}</div>)}
                 </div>
                 <div className="field" style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                   <input type="checkbox" id={`carbon_decl_${activePlot}`} required style={{ width: 'auto', marginTop: '3px', flexShrink: 0, accentColor: '#1a3d2b' }} checked={fv(activePlot,'legitimacy','carbon_declaration') === 'true'} onChange={e => setFld(activePlot,'legitimacy','carbon_declaration', e.target.checked ? 'true' : '')} />
@@ -1051,20 +1156,27 @@ export default function Home() {
                 {[
                   ['Τύπος οντότητας', onb.type],
                   ['Ονοματεπώνυμο', `${onb.firstName} ${onb.lastName}`.trim() || null],
-                  onb.orgName ? ['Επωνυμία οργανισμού', onb.orgName] : null,
+                  onb.orgName ? ['Επωνυμία οργανισμού/εταιρείας', onb.orgName] : null,
+                  onb.companyRepName ? ['Εκπρόσωπος εταιρείας', onb.companyRepName] : null,
+                  (onb.type === 'Αγροτικός συνεταιρισμός' && onb.memberFirstName) ? ['Εκπρόσωπος', `${onb.memberFirstName} ${onb.memberLastName}`.trim()] : null,
+                  (onb.type === 'Αγροτικός συνεταιρισμός' && onb.ownerFirstName) ? ['Ιδιοκτήτης αγροτεμαχίου', `${onb.ownerFirstName} ${onb.ownerLastName}`.trim()] : null,
                   ['Email', onb.email],
                   ['Τηλέφωνο', onb.phone],
                   ['Νομός / Περιφέρεια', onb.region],
-                  ['Συνολική έκταση', onb.hectares ? `${onb.hectares} ha` : null],
+                  ['Συνολική έκταση', onb.hectares ? `${onb.hectares} στρέμματα` : null],
                   ['Αριθμός αγροτεμαχίων', onb.plots || null],
                   ['Καλλιέργειες', onb.crops.length ? onb.crops.join(', ') : null],
                   ['Γεωργικός εξοπλισμός', onb.equipment.length ? onb.equipment.join(', ') : null],
                   ['Μέγεθος εκμετάλλευσης', onb.farm_size || null],
                   ['Κύριο κίνητρο', onb.motivation || null],
                   ['Αποτύπωμα άνθρακα', onb.carbon_measured || null],
+                  onb.carbonValue ? ['Τιμή αποτυπώματος', `${onb.carbonValue} tCO₂e/στρέμμα`] : null,
                   ['Γεωπόνος / Σύμβουλος', onb.agronomist || null],
+                  onb.agronomistNumber ? ['Αρ. μητρώου γεωπόνου', onb.agronomistNumber] : null,
                   ['Πηγή πληροφόρησης', onb.source || null],
                   onb.comments ? ['Σχόλια', onb.comments] : null,
+                  carbonFile ? ['Αρχείο μέτρησης CO₂', carbonFile.name] : null,
+                  agronomistFile ? ['Αρχείο συνεργασίας γεωπόνου', agronomistFile.name] : null,
                 ].filter(r => r && r[1]).map(([k, v]) => (
                   <div key={k} style={{display:'flex',gap:'12px',padding:'5px 0',borderBottom:'1px solid #f5f8f2',fontSize:'13px'}}>
                     <span style={{color:'#888',width:'200px',flexShrink:0}}>{k}</span>
@@ -1163,6 +1275,15 @@ export default function Home() {
                         ))}
                       </div>
                       {info.notes && <div style={{fontSize:'12px',color:'#666',marginBottom:'10px',fontStyle:'italic'}}><span style={{color:'#999',fontStyle:'normal'}}>Σχόλια: </span>{info.notes}</div>}
+                      {(gisFiles[`p${plot}`] || certFiles[`p${plot}`] || soilFiles[`p${plot}`] || (legalFiles[`p${plot}`] || []).length > 0) && (
+                        <div style={{marginBottom:'10px'}}>
+                          <div style={{fontSize:'12px',fontWeight:'600',color:'#555',marginBottom:'4px'}}>📎 Συνημμένα αρχεία</div>
+                          {gisFiles[`p${plot}`] && <div style={{fontSize:'12px',color:'#4a8c2a',padding:'2px 0'}}>GIS: {gisFiles[`p${plot}`].name}</div>}
+                          {soilFiles[`p${plot}`] && <div style={{fontSize:'12px',color:'#4a8c2a',padding:'2px 0'}}>Εδαφολογική: {soilFiles[`p${plot}`].name}</div>}
+                          {certFiles[`p${plot}`] && <div style={{fontSize:'12px',color:'#4a8c2a',padding:'2px 0'}}>Πιστοποίηση: {certFiles[`p${plot}`].name}</div>}
+                          {(legalFiles[`p${plot}`] || []).map(f => <div key={f.name} style={{fontSize:'12px',color:'#4a8c2a',padding:'2px 0'}}>ΟΣΔΕ: {f.name}</div>)}
+                        </div>
+                      )}
 
                       {FIELD_YEAR_SECTIONS.map(sec => {
                         const secObj = FIELD_SECTIONS.find(s => s.key === sec);

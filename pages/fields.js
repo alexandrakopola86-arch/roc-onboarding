@@ -40,6 +40,7 @@ export default function Fields() {
   const [legalFiles, setLegalFiles] = useState({});
   const [certFiles, setCertFiles] = useState({});
   const [gisFiles, setGisFiles] = useState({});
+  const [soilFiles, setSoilFiles] = useState({});
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -259,8 +260,12 @@ export default function Fields() {
 
               <div className="row2">
                 <div className="field">
-                  <label>Εδαφική ανάλυση (αρχείο/link)</label>
-                  <input type="text" placeholder="π.χ. link ή όνομα αρχείου" value={val(activePlot,'info','soil_file')} onChange={e => setField(activePlot,'info','soil_file',e.target.value)} />
+                  <label>Εδαφική ανάλυση</label>
+                  <input type="text" placeholder="Link εδαφολογικής ανάλυσης (URL)" value={val(activePlot,'info','soil_link')} onChange={e => setField(activePlot,'info','soil_link',e.target.value)} />
+                  <div style={{ marginTop: '8px' }}>
+                    <label style={{ fontSize: '12px', color: '#666', fontWeight: '400', marginBottom: '4px' }}>ή ανεβάστε αρχείο (.pdf, .jpg, .png)</label>
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" style={{ padding: '8px 0', border: 'none' }} onChange={e => setSoilFiles(prev => ({ ...prev, [`plot${activePlot}`]: e.target.files[0] }))} />
+                  </div>
                 </div>
                 <div className="field">
                   <label>Τύπος εδάφους</label>
@@ -375,20 +380,18 @@ export default function Fields() {
                         <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={val(activePlot,'info','pump_type_other')} onChange={e => setField(activePlot,'info','pump_type_other',e.target.value)} />
                       )}
                     </div>
-                    <div className="field">
-                      <label>Τύπος Καυσίμου *</label>
-                      <select required value={val(activePlot,'info','fuel_type')} onChange={e => setField(activePlot,'info','fuel_type',e.target.value)}>
-                        <option value="">Επιλέξτε...</option>
-                        {FUEL_TYPES.map(o => <option key={o}>{o}</option>)}
-                      </select>
-                      {val(activePlot,'info','fuel_type') === 'Άλλο' && (
-                        <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={val(activePlot,'info','fuel_type_other')} onChange={e => setField(activePlot,'info','fuel_type_other',e.target.value)} />
-                      )}
-                    </div>
-                  </div>
-                  <div className="field">
-                    <label>Ετήσια κατανάλωση ενέργειας/καυσίμου *</label>
-                    <input required type="number" placeholder="π.χ. 1200" value={val(activePlot,'info','energy_consumption')} onChange={e => setField(activePlot,'info','energy_consumption',e.target.value)} />
+                    {['Ηλεκτροκίνητη','Φωτοβολταϊκό/ΑΠΕ'].includes(val(activePlot,'info','pump_type')) && (
+                      <div className="field">
+                        <label>Κατανάλωση ρεύματος (kWh/έτος) *</label>
+                        <input required type="number" placeholder="π.χ. 1200" value={val(activePlot,'info','pump_kwh')} onChange={e => setField(activePlot,'info','pump_kwh',e.target.value)} />
+                      </div>
+                    )}
+                    {['Πετρελαιοκίνητη (Diesel)','Βενζινοκίνητη','Άλλο'].includes(val(activePlot,'info','pump_type')) && (
+                      <div className="field">
+                        <label>Κατανάλωση καυσίμου (λίτρα/έτος) *</label>
+                        <input required type="number" placeholder="π.χ. 800" value={val(activePlot,'info','fuel_liters')} onChange={e => setField(activePlot,'info','fuel_liters',e.target.value)} />
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -605,8 +608,8 @@ export default function Fields() {
               {val(activePlot,'certification','has_cert') === 'Ναι' && (
                 <>
                   <div className="field">
-                    <label>Τύπος πιστοποίησης</label>
-                    <select value={val(activePlot,'certification','cert_type')} onChange={e => setField(activePlot,'certification','cert_type',e.target.value)}>
+                    <label>Τύπος πιστοποίησης *</label>
+                    <select required value={val(activePlot,'certification','cert_type')} onChange={e => setField(activePlot,'certification','cert_type',e.target.value)}>
                       <option value="">Επιλέξτε...</option>
                       {CERT_TYPES.map(t => <option key={t}>{t}</option>)}
                     </select>
@@ -615,8 +618,8 @@ export default function Fields() {
                     )}
                   </div>
                   <div className="field">
-                    <label>Αριθμός πιστοποίησης (προαιρετικά αν ανεβάσετε αρχείο)</label>
-                    <input type="text" placeholder="π.χ. GR-ORG-001" value={val(activePlot,'certification','cert_number')} onChange={e => setField(activePlot,'certification','cert_number',e.target.value)} />
+                    <label>Αριθμός πιστοποίησης *</label>
+                    <input required type="text" placeholder="π.χ. GR-ORG-001" value={val(activePlot,'certification','cert_number')} onChange={e => setField(activePlot,'certification','cert_number',e.target.value)} />
                   </div>
                   <div className="field">
                     <label>Αρχείο πιστοποίησης</label>

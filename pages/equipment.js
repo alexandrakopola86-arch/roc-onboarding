@@ -133,8 +133,7 @@ const EQUIPMENT_SCHEMAS = {
     icon: '🔧',
     instanceFields: [
       { key: 'type', label: 'Είδος εξοπλισμού', type: 'text', placeholder: 'π.χ. Μπαλιαστικό' },
-      { key: 'capacity', label: 'Χωρητικότητα (κιλά)', type: 'number', placeholder: 'π.χ. 500' },
-      { key: 'hp', label: 'Ιπποδύναμη (HP)', type: 'number', placeholder: 'π.χ. 80' },
+      { key: 'description', label: 'Περιγραφή εξοπλισμού', type: 'text', placeholder: 'π.χ. Πλάτος 1.5μ, έτος κατασκευής 2010' },
     ],
     yearlyFields: [
       { key: 'hours', label: 'Ώρες λειτουργίας' },
