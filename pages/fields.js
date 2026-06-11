@@ -17,6 +17,7 @@ const SECTIONS = [
   { key: 'harvest_cover', label: 'Συγκομιδή Επίσπορη', icon: '📅' },
   { key: 'fertilizer_n', label: 'Λιπάσματα Αζωτούχα', icon: '🧪' },
   { key: 'fertilizer_org', label: 'Λιπάσματα Οργανικά', icon: '🌿' },
+  { key: 'legitimacy', label: 'Νομιμοποιητικά', icon: '📄' },
 ];
 
 export default function Fields() {
@@ -27,6 +28,7 @@ export default function Fields() {
   const [formData, setFormData] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [legalFiles, setLegalFiles] = useState({});
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -195,9 +197,19 @@ export default function Fields() {
                 </div>
               </div>
               {val(activePlot,'info','lime') === 'Ναι' && (
-                <div className="field">
-                  <label>Ποσότητα ασβέστη (kg/ha)</label>
-                  <input type="number" placeholder="π.χ. 2500" value={val(activePlot,'info','lime_qty')} onChange={e => setField(activePlot,'info','lime_qty',e.target.value)} />
+                <div className="row2">
+                  <div className="field">
+                    <label>Τύπος ασβέστη *</label>
+                    <select required value={val(activePlot,'info','lime_type')} onChange={e => setField(activePlot,'info','lime_type',e.target.value)}>
+                      <option value="">Επιλέξτε...</option>
+                      <option>Ασβεστιτικός</option>
+                      <option>Δολομιτικός</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label>Ποσότητα (tn/ha) *</label>
+                    <input required type="number" placeholder="π.χ. 2.5" step="0.1" value={val(activePlot,'info','lime_qty')} onChange={e => setField(activePlot,'info','lime_qty',e.target.value)} />
+                  </div>
                 </div>
               )}
               <div className="row3">
@@ -205,9 +217,8 @@ export default function Fields() {
                   <label>Διαχείριση υπολειμμάτων</label>
                   <select value={val(activePlot,'info','residues')} onChange={e => setField(activePlot,'info','residues',e.target.value)}>
                     <option value="">Επιλέξτε...</option>
-                    <option>Ενσωμάτωση</option>
-                    <option>Παραμονή επιφανειακά</option>
-                    <option>Απόρριψη</option>
+                    <option>Παραμονή/Ενσωμάτωση</option>
+                    <option>Απομάκρυνση</option>
                     <option>Καύση</option>
                   </select>
                 </div>
@@ -226,6 +237,59 @@ export default function Fields() {
                   </select>
                 </div>
               </div>
+              {val(activePlot,'info','residues') === 'Απομάκρυνση' && (
+                <div className="field">
+                  <label>Ποσοστό (%) υπολειμμάτων που απομακρύνθηκε *</label>
+                  <input required type="number" min="0" max="100" placeholder="π.χ. 80" value={val(activePlot,'info','residues_pct')} onChange={e => setField(activePlot,'info','residues_pct',e.target.value)} />
+                </div>
+              )}
+              {val(activePlot,'info','irrigated') === 'Ναι' && (
+                <>
+                  <div className="row2">
+                    <div className="field">
+                      <label>Ποσότητα νερού *</label>
+                      <input required type="number" placeholder="π.χ. 500" value={val(activePlot,'info','irr_qty')} onChange={e => setField(activePlot,'info','irr_qty',e.target.value)} />
+                    </div>
+                    <div className="field">
+                      <label>Τύπος Άρδευσης *</label>
+                      <select required value={val(activePlot,'info','irr_type')} onChange={e => setField(activePlot,'info','irr_type',e.target.value)}>
+                        <option value="">Επιλέξτε...</option>
+                        <option>Στάγδην</option>
+                        <option>Μπεκ/Micro-sprinklers</option>
+                        <option>Καρούλια/Κανόνια</option>
+                        <option>Ράμπα οριζόντιου ποτίσματος</option>
+                        <option>Κατάκλυση/Επιφανειακή</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="row2">
+                    <div className="field">
+                      <label>Τύπος Αντλίας *</label>
+                      <select required value={val(activePlot,'info','pump_type')} onChange={e => setField(activePlot,'info','pump_type',e.target.value)}>
+                        <option value="">Επιλέξτε...</option>
+                        <option>Ηλεκτροκίνητη</option>
+                        <option>Πετρελαιοκίνητη (Diesel)</option>
+                        <option>Βενζινοκίνητη</option>
+                        <option>Φωτοβολταϊκό/ΑΠΕ</option>
+                        <option>Αρδευτικό δίκτυο ΤΟΕΒ</option>
+                      </select>
+                    </div>
+                    <div className="field">
+                      <label>Τύπος Καυσίμου *</label>
+                      <select required value={val(activePlot,'info','fuel_type')} onChange={e => setField(activePlot,'info','fuel_type',e.target.value)}>
+                        <option value="">Επιλέξτε...</option>
+                        <option>Diesel</option>
+                        <option>Βενζίνη</option>
+                        <option>Ρεύμα Δικτύου</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="field">
+                    <label>Ετήσια κατανάλωση ενέργειας/καυσίμου *</label>
+                    <input required type="number" placeholder="π.χ. 1200" value={val(activePlot,'info','energy_consumption')} onChange={e => setField(activePlot,'info','energy_consumption',e.target.value)} />
+                  </div>
+                </>
+              )}
               <div className="row2">
                 <div className="field">
                   <label>Βόσκηση</label>
@@ -439,6 +503,37 @@ export default function Fields() {
                   </div>
                 </div>
               ))}
+            </>
+          )}
+
+          {/* ΝΟΜΙΜΟΠΟΙΗΤΙΚΑ */}
+          {activeSection === 'legitimacy' && (
+            <>
+              <div className="section-title">📄 Νομιμοποιητικά — Αγροτεμάχιο {activePlot}</div>
+              <div className="section-sub">Δικαιολογητικά και υπεύθυνη δήλωση για τα αγροτεμάχια.</div>
+              <div className="field">
+                <label>ΟΣΔΕ / Ενοικιαστήρια (αρχεία)</label>
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  onChange={e => setLegalFiles(prev => ({ ...prev, [`plot${activePlot}`]: e.target.files }))}
+                  style={{ padding: '8px 0', border: 'none' }}
+                />
+              </div>
+              <div className="field" style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <input
+                  type="checkbox"
+                  id={`carbon_decl_${activePlot}`}
+                  required
+                  style={{ width: 'auto', marginTop: '3px', flexShrink: 0, accentColor: '#1a3d2b' }}
+                  checked={val(activePlot,'legitimacy','carbon_declaration') === 'true'}
+                  onChange={e => setField(activePlot,'legitimacy','carbon_declaration', e.target.checked ? 'true' : '')}
+                />
+                <label htmlFor={`carbon_decl_${activePlot}`} style={{ fontWeight: '400', cursor: 'pointer', lineHeight: '1.5' }}>
+                  Δηλώνω υπεύθυνα ότι τα αναγραφόμενα αγροτεμάχια δεν συμμετέχουν σε κανένα άλλο πρόγραμμα Carbon Credits *
+                </label>
+              </div>
             </>
           )}
 
