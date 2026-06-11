@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 
 const ALL_YEARS = [2021, 2022, 2023, 2024, 2025];
@@ -185,6 +185,9 @@ export default function Home() {
   const [legalFiles, setLegalFiles] = useState({});
   const [agronomistFile, setAgronomistFile] = useState(null);
   const [carbonFile, setCarbonFile] = useState(null);
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [savedProgress, setSavedProgress] = useState(null);
+  const skipFirstSave = useRef(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -243,6 +246,27 @@ export default function Home() {
     setSubmittedAt(new Date());
     setPhase('done');
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem('roc_progress');
+    if (saved) {
+      try {
+        setSavedProgress(JSON.parse(saved));
+        setShowResumeModal(true);
+      } catch {
+        localStorage.removeItem('roc_progress');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (skipFirstSave.current) { skipFirstSave.current = false; return; }
+    if (phase === 'done') return;
+    const snapshot = { phase, onbStep, onb, equipData, equipYears, equipUndoStacks, fieldData, fieldYears, fieldUndoStacks, activePlot, activeEquip, activeFieldSection };
+    localStorage.setItem('roc_progress', JSON.stringify(snapshot));
+  }, [phase, onbStep, onb, equipData, equipYears, equipUndoStacks, fieldData, fieldYears, fieldUndoStacks, activePlot, activeEquip, activeFieldSection]);
 
   const setOnbField = (k, v) => setOnb(p => ({ ...p, [k]: v }));
   const toggleArr = (k, v) => setOnb(p => ({ ...p, [k]: p[k].includes(v) ? p[k].filter(x => x !== v) : [...p[k], v] }));
@@ -433,8 +457,32 @@ export default function Home() {
       await fetch('/api/submit-simple', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboarding: onb, equipment: equipData, fields: fieldData, fileNames }) });
       setSubmittedAt(new Date());
       setPhase('done');
+      localStorage.removeItem('roc_progress');
     } catch (e) { console.error(e); }
     setLoading(false);
+  };
+
+  const restoreProgress = () => {
+    if (!savedProgress) return;
+    if (savedProgress.phase) setPhase(savedProgress.phase);
+    if (savedProgress.onbStep) setOnbStep(savedProgress.onbStep);
+    if (savedProgress.onb) setOnb(savedProgress.onb);
+    if (savedProgress.equipData) setEquipData(savedProgress.equipData);
+    if (savedProgress.equipYears) setEquipYears(savedProgress.equipYears);
+    if (savedProgress.equipUndoStacks) setEquipUndoStacks(savedProgress.equipUndoStacks);
+    if (savedProgress.fieldData) setFieldData(savedProgress.fieldData);
+    if (savedProgress.fieldYears) setFieldYears(savedProgress.fieldYears);
+    if (savedProgress.fieldUndoStacks) setFieldUndoStacks(savedProgress.fieldUndoStacks);
+    if (savedProgress.activePlot) setActivePlot(savedProgress.activePlot);
+    if (savedProgress.activeEquip !== undefined) setActiveEquip(savedProgress.activeEquip);
+    if (savedProgress.activeFieldSection) setActiveFieldSection(savedProgress.activeFieldSection);
+    setShowResumeModal(false);
+  };
+
+  const clearProgress = () => {
+    localStorage.removeItem('roc_progress');
+    setSavedProgress(null);
+    setShowResumeModal(false);
   };
 
   const onbProgress = Math.round((onbStep / ONB_TOTAL) * 100);
@@ -448,6 +496,19 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
       </Head>
+      {showResumeModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'white', borderRadius: '16px', padding: '2rem', maxWidth: '420px', width: '90%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🌱</div>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1a3d2b', marginBottom: '0.75rem' }}>Αποθηκευμένη πρόοδος</h2>
+            <p style={{ color: '#555', fontSize: '0.95rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>Έχετε αποθηκευμένη πρόοδο. Θέλετε να συνεχίσετε εκεί που έχετε μείνει;</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button onClick={clearProgress} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #d0d8cc', background: 'white', color: '#555', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '500' }}>Από την αρχή</button>
+              <button onClick={restoreProgress} style={{ padding: '10px 24px', borderRadius: '8px', border: 'none', background: '#1a3d2b', color: 'white', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '600' }}>Συνέχεια</button>
+            </div>
+          </div>
+        </div>
+      )}
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Inter',sans-serif;background:#f4f7f4;min-height:100vh;padding:2rem 1rem}
@@ -676,7 +737,7 @@ export default function Home() {
                 <div className="step-sub">Πού βρίσκονται τα αγροτεμάχιά σας;</div>
                 <div className="field"><label>Νομός / Περιφέρεια <span className="required">*</span></label><select className={onbErrors.region ? 'err' : ''} value={onb.region} onChange={e => setOnbField('region', e.target.value)}><option value="">Επιλέξτε...</option>{REGIONS.map(r => <option key={r}>{r}</option>)}</select></div>
                 <div className="row2">
-                  <div className="field"><label>Συνολική έκταση (στρέμματα) <span className="required">*</span></label><input className={onbErrors.hectares ? 'err' : ''} type="number" min="0" step="0.1" value={onb.hectares} onChange={e => setOnbField('hectares', e.target.value)} placeholder="π.χ. 150" /></div>
+                  <div className="field"><label>Συνολικά στρέμματα <span className="required">*</span></label><input className={onbErrors.hectares ? 'err' : ''} type="number" min="0" step="0.1" value={onb.hectares} onChange={e => setOnbField('hectares', e.target.value)} placeholder="π.χ. 150" /></div>
                   <div className="field"><label>Αριθμός αγροτεμαχίων <span className="required">*</span></label><input className={onbErrors.plots ? 'err' : ''} type="number" min="1" step="1" value={onb.plots} onChange={e => setOnbField('plots', e.target.value)} placeholder="π.χ. 3" /></div>
                 </div>
                 {(onbErrors.region || onbErrors.hectares || onbErrors.plots) && <div className="err-msg">Παρακαλούμε συμπληρώστε όλα τα υποχρεωτικά πεδία.</div>}
