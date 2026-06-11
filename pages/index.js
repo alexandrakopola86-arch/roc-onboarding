@@ -309,7 +309,7 @@ export default function Home() {
   const submitAll = async () => {
     setLoading(true);
     try {
-      await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboarding: onb, equipment: equipData, fields: fieldData }) });
+      await fetch('/api/submit-simple', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboarding: onb, equipment: equipData, fields: fieldData }) });
       setPhase('done');
     } catch (e) { console.error(e); }
     setLoading(false);
