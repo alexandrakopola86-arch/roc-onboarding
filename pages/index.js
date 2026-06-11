@@ -318,11 +318,13 @@ export default function Home() {
     const e = {};
     if (step === 1 && !onb.type) e.type = true;
     if (step === 2) {
-      if (!onb.firstName) e.firstName = true;
-      if (!onb.lastName) e.lastName = true;
-      if (!onb.email || !/\S+@\S+/.test(onb.email)) e.email = true;
-      if (!onb.phone) e.phone = true;
-      else if (!/^69\d{8}$/.test(onb.phone)) e.phoneFormat = true;
+      if (onb.type !== 'Αγροτικός συνεταιρισμός') {
+        if (!onb.firstName) e.firstName = true;
+        if (!onb.lastName) e.lastName = true;
+        if (!onb.email || !/\S+@\S+/.test(onb.email)) e.email = true;
+        if (!onb.phone) e.phone = true;
+        else if (!/^69\d{8}$/.test(onb.phone)) e.phoneFormat = true;
+      }
       if (onb.type === 'Αγροτικός συνεταιρισμός') {
         if (!onb.orgName) e.orgName = true;
         if (!onb.memberFirstName) e.memberFirstName = true;
@@ -573,16 +575,18 @@ export default function Home() {
               {onbStep === 2 && (<>
                 <div className="step-title">Στοιχεία επικοινωνίας</div>
                 <div className="step-sub">Συμπληρώστε τα στοιχεία σας για να επικοινωνήσουμε μαζί σας.</div>
-                <div className="row2">
-                  <div className="field"><label>Όνομα <span className="required">*</span></label><input className={onbErrors.firstName ? 'err' : ''} value={onb.firstName} onChange={e => setOnbField('firstName', e.target.value)} placeholder="π.χ. Γιώργος" /></div>
-                  <div className="field"><label>Επώνυμο <span className="required">*</span></label><input className={onbErrors.lastName ? 'err' : ''} value={onb.lastName} onChange={e => setOnbField('lastName', e.target.value)} placeholder="π.χ. Παπαδόπουλος" /></div>
-                </div>
-                <div className="field"><label>Διεύθυνση email <span className="required">*</span></label><input className={onbErrors.email ? 'err' : ''} type="email" value={onb.email} onChange={e => setOnbField('email', e.target.value)} placeholder="email@example.com" />{onbErrors.email && <div className="err-msg">Εισάγετε έγκυρη διεύθυνση email.</div>}</div>
-                <div className="field">
-                  <label>Τηλέφωνο επικοινωνίας <span className="required">*</span></label>
-                  <input className={onbErrors.phone || onbErrors.phoneFormat ? 'err' : ''} type="tel" value={onb.phone} onChange={e => setOnbField('phone', e.target.value)} placeholder="π.χ. 6901234567" />
-                  {(onbErrors.phone || onbErrors.phoneFormat) && <div className="err-msg">Το κινητό πρέπει να είναι μορφής 69XXXXXXXX</div>}
-                </div>
+                {onb.type !== 'Αγροτικός συνεταιρισμός' && (<>
+                  <div className="row2">
+                    <div className="field"><label>Όνομα <span className="required">*</span></label><input className={onbErrors.firstName ? 'err' : ''} value={onb.firstName} onChange={e => setOnbField('firstName', e.target.value)} placeholder="π.χ. Γιώργος" /></div>
+                    <div className="field"><label>Επώνυμο <span className="required">*</span></label><input className={onbErrors.lastName ? 'err' : ''} value={onb.lastName} onChange={e => setOnbField('lastName', e.target.value)} placeholder="π.χ. Παπαδόπουλος" /></div>
+                  </div>
+                  <div className="field"><label>Διεύθυνση email <span className="required">*</span></label><input className={onbErrors.email ? 'err' : ''} type="email" value={onb.email} onChange={e => setOnbField('email', e.target.value)} placeholder="email@example.com" />{onbErrors.email && <div className="err-msg">Εισάγετε έγκυρη διεύθυνση email.</div>}</div>
+                  <div className="field">
+                    <label>Τηλέφωνο επικοινωνίας <span className="required">*</span></label>
+                    <input className={onbErrors.phone || onbErrors.phoneFormat ? 'err' : ''} type="tel" value={onb.phone} onChange={e => setOnbField('phone', e.target.value)} placeholder="π.χ. 6901234567" />
+                    {(onbErrors.phone || onbErrors.phoneFormat) && <div className="err-msg">Το κινητό πρέπει να είναι μορφής 69XXXXXXXX</div>}
+                  </div>
+                </>)}
                 {onb.type !== 'Μεμονωμένος αγρότης' && (
                   <div className="field">
                     <label>Επωνυμία {onb.type === 'Αγροτικός συνεταιρισμός' ? 'συνεταιρισμού' : 'εταιρείας'} <span className="required">*</span></label>
