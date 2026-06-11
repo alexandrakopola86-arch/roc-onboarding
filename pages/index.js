@@ -136,10 +136,15 @@ function YearBlock({ year, fields, data, onChange, onRemove, canRemove, isEquip 
             <div key={f.key}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: '500', color: '#333', marginBottom: '5px' }}>{f.label} <span style={{ color: '#e24b4a' }}>*</span></label>
               {f.type === 'select' ? (
-                <select style={{ width: '100%', border: `1px solid ${data?.[f.key] ? '#4a8c2a' : '#d0d8cc'}`, borderRadius: '8px', padding: '10px 12px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#333', background: 'white', outline: 'none' }} value={data?.[f.key] || ''} onChange={e => onChange(year, f.key, e.target.value)}>
-                  <option value="">Επιλέξτε...</option>
-                  {f.options.map(o => <option key={o}>{o}</option>)}
-                </select>
+                <>
+                  <select style={{ width: '100%', border: `1px solid ${data?.[f.key] ? '#4a8c2a' : '#d0d8cc'}`, borderRadius: '8px', padding: '10px 12px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#333', background: 'white', outline: 'none' }} value={data?.[f.key] || ''} onChange={e => onChange(year, f.key, e.target.value)}>
+                    <option value="">Επιλέξτε...</option>
+                    {f.options.map(o => <option key={o}>{o}</option>)}
+                  </select>
+                  {f.options?.includes('Άλλο') && data?.[f.key] === 'Άλλο' && (
+                    <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '6px', width: '100%', border: '1px solid #d0d8cc', borderRadius: '8px', padding: '8px 10px', fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#333', background: 'white', outline: 'none' }} value={data?.[`${f.key}_other`] || ''} onChange={e => onChange(year, `${f.key}_other`, e.target.value)} />
+                  )}
+                </>
               ) : (
                 <input type={f.type || 'text'} placeholder={f.placeholder || '—'} style={{ width: '100%', border: `1px solid ${data?.[f.key] ? '#4a8c2a' : '#d0d8cc'}`, borderRadius: '8px', padding: '10px 12px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#333', background: 'white', outline: 'none' }} value={data?.[f.key] || ''} onChange={e => onChange(year, f.key, e.target.value)} />
               )}
