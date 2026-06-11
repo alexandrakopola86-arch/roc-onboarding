@@ -170,6 +170,7 @@ export default function Home() {
   const [fieldUndoStacks, setFieldUndoStacks] = useState({});
   const [sectionErrors, setSectionErrors] = useState('');
   const [loading, setLoading] = useState(false);
+  const [submittedAt, setSubmittedAt] = useState(null);
 
   const setOnbField = (k, v) => setOnb(p => ({ ...p, [k]: v }));
   const toggleArr = (k, v) => setOnb(p => ({ ...p, [k]: p[k].includes(v) ? p[k].filter(x => x !== v) : [...p[k], v] }));
@@ -310,6 +311,7 @@ export default function Home() {
     setLoading(true);
     try {
       await fetch('/api/submit-simple', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboarding: onb, equipment: equipData, fields: fieldData }) });
+      setSubmittedAt(new Date());
       setPhase('done');
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -399,6 +401,15 @@ export default function Home() {
         .sum-row:last-child{border-bottom:none}
         .sum-k{color:#888;flex-shrink:0}
         .sum-v{color:#1a3d2b;font-weight:500;text-align:right}
+        .no-print{}
+        @media print{
+          body{background:white!important;padding:0!important}
+          .no-print{display:none!important}
+          .phase-bar,.header{display:none!important}
+          .wrap{max-width:100%!important;margin:0!important}
+          .card{border:none!important;border-radius:0!important;padding:0!important}
+          table{page-break-inside:avoid}
+        }
       `}</style>
 
       <div className="wrap">
@@ -681,16 +692,192 @@ export default function Home() {
         )}
 
         {phase === 'done' && (
-          <div className="card" style={{textAlign:'center',padding:'3rem 2rem'}}>
-            <div style={{fontSize:'52px',marginBottom:'1rem'}}>✅</div>
-            <h2 style={{color:'#1a3d2b',fontSize:'20px',marginBottom:'8px'}}>Σας ευχαριστούμε!</h2>
-            <p style={{color:'#666',fontSize:'14px',lineHeight:'1.6'}}>Λάβαμε όλα τα στοιχεία σας. Θα επικοινωνήσουμε μαζί σας σύντομα.</p>
-            <div className="summary">
-              {[['Τύπος οντότητας',onb.type],['Ονοματεπώνυμο',onb.orgName||`${onb.firstName} ${onb.lastName}`],['Email',onb.email],['Τηλέφωνο',onb.phone],['Περιοχή',onb.region],['Έκταση',onb.hectares?`${onb.hectares} ha · ${onb.plots} αγροτεμάχια`:'—'],['Καλλιέργειες',onb.crops.join(', ')||'—'],['Κίνητρο',onb.motivation||'—'],['Εξοπλισμός',onb.equipment.join(', ')||'—']].map(([k,v]) => (
-                <div className="sum-row" key={k}><span className="sum-k">{k}</span><span className="sum-v">{v||'—'}</span></div>
-              ))}
+          <>
+            {/* Print button */}
+            <div className="no-print" style={{display:'flex',justifyContent:'flex-end',marginBottom:'1rem'}}>
+              <button onClick={() => window.print()} style={{padding:'10px 20px',border:'none',borderRadius:'8px',background:'#1a3d2b',color:'white',fontSize:'13px',fontWeight:'500',cursor:'pointer',fontFamily:'Inter,sans-serif',display:'flex',alignItems:'center',gap:'6px'}}>
+                🖨 Εκτύπωση / Αποθήκευση PDF
+              </button>
             </div>
-          </div>
+
+            {/* Success banner */}
+            <div className="card" style={{textAlign:'center',padding:'1.5rem 2rem',marginBottom:'1rem'}}>
+              <div style={{fontSize:'40px',marginBottom:'6px'}}>✅</div>
+              <h2 style={{color:'#1a3d2b',fontSize:'18px',marginBottom:'4px'}}>Σας ευχαριστούμε!</h2>
+              <p style={{color:'#666',fontSize:'13px',lineHeight:'1.6'}}>Λάβαμε όλα τα στοιχεία σας. Θα επικοινωνήσουμε μαζί σας σύντομα.</p>
+            </div>
+
+            {/* Full summary document */}
+            <div style={{background:'white',borderRadius:'12px',border:'1px solid #e0ead8',overflow:'hidden',marginBottom:'2rem'}}>
+
+              {/* Document header */}
+              <div style={{background:'#1a3d2b',padding:'1.25rem 2rem',display:'flex',alignItems:'center',gap:'1rem'}}>
+                <div style={{width:'44px',height:'44px',background:'white',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',flexShrink:0}}>
+                  <img src="/roc_logo.jpeg" alt="RoC" style={{width:'100%',height:'100%',objectFit:'contain'}} />
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{color:'white',fontSize:'15px',fontWeight:'600'}}>Roots of Carbon</div>
+                  <div style={{color:'rgba(255,255,255,0.7)',fontSize:'12px'}}>Φόρμα Εκδήλωσης Ενδιαφέροντος</div>
+                </div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{color:'rgba(255,255,255,0.65)',fontSize:'11px'}}>Ημερομηνία υποβολής</div>
+                  <div style={{color:'white',fontSize:'12px',fontWeight:'500'}}>
+                    {submittedAt ? submittedAt.toLocaleDateString('el-GR',{day:'2-digit',month:'2-digit',year:'numeric'}) + '  ' + submittedAt.toLocaleTimeString('el-GR',{hour:'2-digit',minute:'2-digit'}) : '—'}
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Section 1: Στοιχεία Εγγραφής ── */}
+              <div style={{padding:'1.5rem 2rem',borderBottom:'2px solid #e8f0e0'}}>
+                <div style={{fontSize:'13px',fontWeight:'700',color:'#1a3d2b',marginBottom:'1rem',display:'flex',alignItems:'center',gap:'8px'}}>
+                  <span style={{background:'#1a3d2b',color:'white',borderRadius:'4px',padding:'2px 8px',fontSize:'11px'}}>1</span>
+                  Στοιχεία Εγγραφής
+                </div>
+                {[
+                  ['Τύπος οντότητας', onb.type],
+                  ['Ονοματεπώνυμο', `${onb.firstName} ${onb.lastName}`.trim() || null],
+                  onb.orgName ? ['Επωνυμία οργανισμού', onb.orgName] : null,
+                  ['Email', onb.email],
+                  ['Τηλέφωνο', onb.phone],
+                  ['Νομός / Περιφέρεια', onb.region],
+                  ['Συνολική έκταση', onb.hectares ? `${onb.hectares} ha` : null],
+                  ['Αριθμός αγροτεμαχίων', onb.plots || null],
+                  ['Καλλιέργειες', onb.crops.length ? onb.crops.join(', ') : null],
+                  ['Γεωργικός εξοπλισμός', onb.equipment.length ? onb.equipment.join(', ') : null],
+                  ['Μέγεθος εκμετάλλευσης', onb.farm_size || null],
+                  ['Κύριο κίνητρο', onb.motivation || null],
+                  ['Αποτύπωμα άνθρακα', onb.carbon_measured || null],
+                  ['Γεωπόνος / Σύμβουλος', onb.agronomist || null],
+                  ['Πηγή πληροφόρησης', onb.source || null],
+                  onb.comments ? ['Σχόλια', onb.comments] : null,
+                ].filter(r => r && r[1]).map(([k, v]) => (
+                  <div key={k} style={{display:'flex',gap:'12px',padding:'5px 0',borderBottom:'1px solid #f5f8f2',fontSize:'13px'}}>
+                    <span style={{color:'#888',width:'200px',flexShrink:0}}>{k}</span>
+                    <span style={{color:'#1a3d2b',fontWeight:'500',flex:1,whiteSpace:'pre-wrap'}}>{v}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Section 2: Εξοπλισμός ── */}
+              {activeEquipList.length > 0 && (
+                <div style={{padding:'1.5rem 2rem',borderBottom:'2px solid #e8f0e0'}}>
+                  <div style={{fontSize:'13px',fontWeight:'700',color:'#1a3d2b',marginBottom:'1rem',display:'flex',alignItems:'center',gap:'8px'}}>
+                    <span style={{background:'#1a3d2b',color:'white',borderRadius:'4px',padding:'2px 8px',fontSize:'11px'}}>2</span>
+                    Εξοπλισμός
+                  </div>
+                  {activeEquipList.map(eq => {
+                    const schema = EQUIPMENT_SCHEMAS[eq];
+                    const data = equipData[eq] || {};
+                    const years = getEquipYears(eq);
+                    return (
+                      <div key={eq} style={{marginBottom:'1.25rem',paddingBottom:'1rem',borderBottom:'1px solid #f0f6e8'}}>
+                        <div style={{fontSize:'13px',fontWeight:'600',color:'#333',marginBottom:'8px'}}>{schema.icon} {eq}</div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 16px',marginBottom:'10px'}}>
+                          {schema.fields.map(f => (
+                            <div key={f.key} style={{display:'flex',gap:'8px',fontSize:'12px',padding:'2px 0'}}>
+                              <span style={{color:'#999',width:'130px',flexShrink:0}}>{f.label}</span>
+                              <span style={{color:'#333',fontWeight:'500'}}>{data[f.key] || '—'}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px'}}>
+                          <thead>
+                            <tr style={{background:'#f4f8f0'}}>
+                              <th style={{padding:'4px 8px',textAlign:'left',color:'#1a3d2b',borderBottom:'1px solid #d8e8cc',fontWeight:'600'}}>Έτος</th>
+                              {schema.yearlyFields.map(yf => <th key={yf.key} style={{padding:'4px 8px',textAlign:'left',color:'#1a3d2b',borderBottom:'1px solid #d8e8cc',fontWeight:'600'}}>{yf.label}</th>)}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {years.map(yr => (
+                              <tr key={yr} style={{borderBottom:'1px solid #f0f5ea'}}>
+                                <td style={{padding:'4px 8px',color:'#1a3d2b',fontWeight:'600'}}>{yr}</td>
+                                {schema.yearlyFields.map(yf => <td key={yf.key} style={{padding:'4px 8px',color:'#444'}}>{data.years?.[yr]?.[yf.key] || '—'}</td>)}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ── Section 3: Αγροτεμάχια ── */}
+              <div style={{padding:'1.5rem 2rem'}}>
+                <div style={{fontSize:'13px',fontWeight:'700',color:'#1a3d2b',marginBottom:'1rem',display:'flex',alignItems:'center',gap:'8px'}}>
+                  <span style={{background:'#1a3d2b',color:'white',borderRadius:'4px',padding:'2px 8px',fontSize:'11px'}}>{activeEquipList.length > 0 ? '3' : '2'}</span>
+                  Αγροτεμάχια
+                </div>
+                {Array.from({length:numPlots},(_,i)=>i+1).map(plot => {
+                  const pData = fieldData[`p${plot}`] || {};
+                  const info = pData.info || {};
+                  return (
+                    <div key={plot} style={{marginBottom:'1.5rem'}}>
+                      <div style={{background:'#f0f7ec',padding:'5px 12px',borderRadius:'6px',fontSize:'12px',fontWeight:'700',color:'#1a3d2b',marginBottom:'8px'}}>
+                        📍 Αγροτεμάχιο {plot}
+                      </div>
+                      {/* Info fields */}
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 16px',marginBottom:'10px'}}>
+                        {[
+                          ['Περιοχή', info.region],
+                          ['Έκταση', info.area ? `${info.area} ha` : null],
+                          ['GIS', info.gis],
+                          ['Τύπος εδάφους', info.soil_type],
+                          ['Αρδευόμενο', info.irrigated],
+                          ['Έξυπνη άρδευση', info.smart_irr],
+                          ['Βόσκηση', info.grazing],
+                          info.grazing === 'Ναι' ? ['Αριθμός ζώων', info.animals] : null,
+                          ['Διαχείριση υπολειμμάτων', info.residues],
+                          ['Εφαρμογή ασβέστη', info.lime],
+                          info.lime === 'Ναι' ? ['Ποσότητα ασβέστη', info.lime_qty ? `${info.lime_qty} kg/ha` : null] : null,
+                          ['Cover crops', info.cover_crops],
+                          ['Εδαφολογική ανάλυση', info.soil_analysis],
+                        ].filter(r => r && r[1]).map(([k, v]) => (
+                          <div key={k} style={{display:'flex',gap:'8px',fontSize:'12px',padding:'2px 0'}}>
+                            <span style={{color:'#999',width:'150px',flexShrink:0}}>{k}</span>
+                            <span style={{color:'#333',fontWeight:'500'}}>{v}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {info.notes && <div style={{fontSize:'12px',color:'#666',marginBottom:'10px',fontStyle:'italic'}}><span style={{color:'#999',fontStyle:'normal'}}>Σχόλια: </span>{info.notes}</div>}
+
+                      {/* Year-based sections */}
+                      {FIELD_YEAR_SECTIONS.map(sec => {
+                        const secObj = FIELD_SECTIONS.find(s => s.key === sec);
+                        const fields = getFieldSectionFields(sec);
+                        const years = getFieldYears(plot, sec);
+                        const secData = pData[sec] || {};
+                        const hasData = years.some(yr => fields.some(f => secData[yr]?.[f.key]));
+                        if (!hasData) return null;
+                        return (
+                          <div key={sec} style={{marginBottom:'10px'}}>
+                            <div style={{fontSize:'12px',fontWeight:'600',color:'#555',marginBottom:'5px'}}>{secObj.icon} {secObj.label}</div>
+                            <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px'}}>
+                              <thead>
+                                <tr style={{background:'#f8fbf6'}}>
+                                  <th style={{padding:'4px 8px',textAlign:'left',color:'#1a3d2b',borderBottom:'1px solid #dce8d4',fontWeight:'600',whiteSpace:'nowrap'}}>Έτος</th>
+                                  {fields.map(f => <th key={f.key} style={{padding:'4px 8px',textAlign:'left',color:'#1a3d2b',borderBottom:'1px solid #dce8d4',fontWeight:'600'}}>{f.label}</th>)}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {years.map(yr => (
+                                  <tr key={yr} style={{borderBottom:'1px solid #f0f5ea'}}>
+                                    <td style={{padding:'4px 8px',color:'#1a3d2b',fontWeight:'600'}}>{yr}</td>
+                                    {fields.map(f => <td key={f.key} style={{padding:'4px 8px',color:'#444'}}>{secData[yr]?.[f.key] || '—'}</td>)}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+
+            </div>
+          </>
         )}
       </div>
     </>
