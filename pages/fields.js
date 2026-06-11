@@ -4,10 +4,10 @@ import { useRouter } from 'next/router';
 
 const YEARS = [2021, 2022, 2023, 2024, 2025];
 const MONTHS = ['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
-const TILLAGE_TYPES = ['Βαθιά άροση', 'Ελαφρά κατεργασία', 'Φρεζάρισμα', 'Καλλιέργεια', 'Χωρίς κατεργασία', 'Ελάχιστη κατεργασία'];
+const TILLAGE_TYPES = ['Συμβατική', 'Μειωμένη', 'Strip-till', 'Ακαλλιέργεια/No-till'];
 const CROP_LIST = ['Ελιά ελαιοποιήσιμη', 'Ελιά επιτραπέζια', 'Βαμβάκι', 'Μαλακό σιτάρι', 'Σκληρό σιτάρι', 'Κριθάρι', 'Αραβόσιτος', 'Βρώμη', 'Λούπινο', 'Ηλίανθος', 'Σόγια', 'Σουσάμι', 'Βίκος', 'Κουκί', 'Αγρανάπαυση', 'Πράσινο ακτινίδιο', 'Αμπέλι', 'Εσπεριδοειδή', 'Κηπευτικά', 'Άλλο', 'Καμία'];
 const FERTILIZER_TYPES = ['Στερεό', 'Υγρό', 'Διαφυλλικό'];
-const ORGANIC_TYPES = ['Κομπόστ', 'Κοπριά βοοειδών', 'Κοπριά χοίρων', 'Κοπριά πουλερικών', 'Πράσινη λίπανση', 'Άλλο'];
+const ORGANIC_TYPES = ['Κοπριά βοοειδών', 'Υδαρής κοπριά βοοειδών (slurry)', 'Κοπριά χοίρων', 'Υδαρής κοπριά χοίρων', 'Κοπριά πουλερικών/Ορνιθώνα', 'Κοπριά αιγοπροβάτων', 'Κομπόστ', 'Χώνευμα/Υπολείμματα Βιοαερίου (Digestate)'];
 
 const SECTIONS = [
   { key: 'info', label: 'Στοιχεία', icon: '📋' },
@@ -67,6 +67,27 @@ export default function Fields() {
 
   const val = (plot, section, field) => formData[`plot${plot}`]?.[section]?.[field] || '';
   const yearVal = (plot, section, year, field) => formData[`plot${plot}`]?.[section]?.[year]?.[field] || '';
+
+  const tillageEntries = (plot, year) => {
+    const e = formData[`plot${plot}`]?.tillage?.[year];
+    return Array.isArray(e) ? e : [{}];
+  };
+  const addTillageEntry = (plot, year) => setFormData(prev => {
+    const curr = prev[`plot${plot}`]?.tillage?.[year];
+    const entries = Array.isArray(curr) ? curr : [{}];
+    return { ...prev, [`plot${plot}`]: { ...prev[`plot${plot}`], tillage: { ...prev[`plot${plot}`]?.tillage, [year]: [...entries, {}] } } };
+  });
+  const removeTillageEntry = (plot, year, idx) => setFormData(prev => {
+    const curr = prev[`plot${plot}`]?.tillage?.[year];
+    const entries = Array.isArray(curr) ? curr : [{}];
+    if (entries.length <= 1) return prev;
+    return { ...prev, [`plot${plot}`]: { ...prev[`plot${plot}`], tillage: { ...prev[`plot${plot}`]?.tillage, [year]: entries.filter((_, i) => i !== idx) } } };
+  });
+  const setTillageEntry = (plot, year, idx, field, value) => setFormData(prev => {
+    const curr = prev[`plot${plot}`]?.tillage?.[year];
+    const entries = Array.isArray(curr) ? curr : [{}];
+    return { ...prev, [`plot${plot}`]: { ...prev[`plot${plot}`], tillage: { ...prev[`plot${plot}`]?.tillage, [year]: entries.map((e, i) => i === idx ? { ...e, [field]: value } : e) } } };
+  });
 
   const submit = async () => {
     setLoading(true);
@@ -316,30 +337,39 @@ export default function Fields() {
           {activeSection === 'tillage' && (
             <>
               <div className="section-title">🔨 Κατεργασία εδάφους — Αγροτεμάχιο {activePlot}</div>
-              <div className="section-sub">Τύπος, ημερομηνία και βάθος κατεργασίας ανά έτος.</div>
+              <div className="section-sub">Εργασίες κατεργασίας εδάφους ανά έτος. Μπορείτε να προσθέσετε πολλαπλές εργασίες ανά έτος.</div>
               {YEARS.map(year => (
                 <div className="year-block" key={year}>
-                  <div className="year-header">{year}</div>
-                  <div className="row3">
-                    <div className="field">
-                      <label>Τύπος κατεργασίας</label>
-                      <select value={yearVal(activePlot,'tillage',year,'type')} onChange={e => setYearField(activePlot,'tillage',year,'type',e.target.value)}>
-                        <option value="">Επιλέξτε...</option>
-                        {TILLAGE_TYPES.map(t => <option key={t}>{t}</option>)}
-                      </select>
-                    </div>
-                    <div className="field">
-                      <label>Μήνας εφαρμογής</label>
-                      <select value={yearVal(activePlot,'tillage',year,'month')} onChange={e => setYearField(activePlot,'tillage',year,'month',e.target.value)}>
-                        <option value="">Επιλέξτε...</option>
-                        {MONTHS.map(m => <option key={m}>{m}</option>)}
-                      </select>
-                    </div>
-                    <div className="field">
-                      <label>Βάθος εφαρμογής (cm)</label>
-                      <input type="number" placeholder="π.χ. 25" value={yearVal(activePlot,'tillage',year,'depth')} onChange={e => setYearField(activePlot,'tillage',year,'depth',e.target.value)} />
-                    </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div className="year-header" style={{ marginBottom: 0 }}>{year}</div>
+                    <button type="button" style={{ fontSize: '12px', padding: '4px 10px', border: '1px solid #4a8c2a', borderRadius: '6px', background: 'white', color: '#1a3d2b', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} onClick={() => addTillageEntry(activePlot, year)}>
+                      + Προσθήκη Εργασίας
+                    </button>
                   </div>
+                  {tillageEntries(activePlot, year).map((entry, idx) => (
+                    <div key={idx} style={{ background: idx > 0 ? '#fafbfa' : 'transparent', border: idx > 0 ? '1px solid #e8f0e4' : 'none', borderRadius: '6px', padding: idx > 0 ? '10px 10px 4px' : '0', marginBottom: '8px', position: 'relative' }}>
+                      {idx > 0 && (
+                        <button type="button" style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '11px', padding: '2px 8px', border: '1px solid #e0a0a0', borderRadius: '4px', background: 'white', color: '#c0392b', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} onClick={() => removeTillageEntry(activePlot, year, idx)}>✕</button>
+                      )}
+                      <div className="row3">
+                        <div className="field">
+                          <label>Τύπος κατεργασίας</label>
+                          <select value={entry.type || ''} onChange={e => setTillageEntry(activePlot, year, idx, 'type', e.target.value)}>
+                            <option value="">Επιλέξτε...</option>
+                            {TILLAGE_TYPES.map(t => <option key={t}>{t}</option>)}
+                          </select>
+                        </div>
+                        <div className="field">
+                          <label>Βάθος εφαρμογής (cm)</label>
+                          <input type="number" placeholder="π.χ. 25" value={entry.depth || ''} onChange={e => setTillageEntry(activePlot, year, idx, 'depth', e.target.value)} />
+                        </div>
+                        <div className="field">
+                          <label>Αριθμός Περασμάτων</label>
+                          <input type="number" placeholder="π.χ. 2" value={entry.passes || ''} onChange={e => setTillageEntry(activePlot, year, idx, 'passes', e.target.value)} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))}
             </>
@@ -410,31 +440,54 @@ export default function Fields() {
           {/* ΣΥΓΚΟΜΙΔΗ ΕΠΙΣΠΟΡΗ */}
           {activeSection === 'harvest_cover' && (
             <>
-              <div className="section-title">📅 Σχεδιασμός & Συγκομιδή Επίσπορης — Αγροτεμάχιο {activePlot}</div>
-              <div className="section-sub">Ημερομηνίες σποράς, συγκομιδής και απόδοση επίσπορης καλλιέργειας ανά έτος.</div>
+              <div className="section-title">📅 Επίσπορη Καλλιέργεια — Αγροτεμάχιο {activePlot}</div>
+              <div className="section-sub">Στοιχεία επίσπορης καλλιέργειας ανά έτος.</div>
               {YEARS.map(year => (
                 <div className="year-block" key={year}>
-                  <div className="year-header">{year}</div>
-                  <div className="row3">
-                    <div className="field">
-                      <label>Μήνας σποράς</label>
-                      <select value={yearVal(activePlot,'harvest_cover',year,'sow_month')} onChange={e => setYearField(activePlot,'harvest_cover',year,'sow_month',e.target.value)}>
-                        <option value="">Επιλέξτε...</option>
-                        {MONTHS.map(m => <option key={m}>{m}</option>)}
-                      </select>
-                    </div>
-                    <div className="field">
-                      <label>Μήνας συγκομιδής</label>
-                      <select value={yearVal(activePlot,'harvest_cover',year,'harvest_month')} onChange={e => setYearField(activePlot,'harvest_cover',year,'harvest_month',e.target.value)}>
-                        <option value="">Επιλέξτε...</option>
-                        {MONTHS.map(m => <option key={m}>{m}</option>)}
-                      </select>
-                    </div>
-                    <div className="field">
-                      <label>Απόδοση (kg/ha)</label>
-                      <input type="number" placeholder="π.χ. 1500" value={yearVal(activePlot,'harvest_cover',year,'yield')} onChange={e => setYearField(activePlot,'harvest_cover',year,'yield',e.target.value)} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div className="year-header" style={{ marginBottom: 0 }}>{year}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '12px', color: '#555' }}>Εφαρμογή Επίσπορης Καλλιέργειας:</span>
+                      <div className="radio-row">
+                        {['Ναι', 'Όχι'].map(opt => (
+                          <label key={opt} className="radio-opt">
+                            <input type="radio" name={`cover_apply_${activePlot}_${year}`} value={opt} checked={yearVal(activePlot,'harvest_cover',year,'applies') === opt} onChange={() => setYearField(activePlot,'harvest_cover',year,'applies',opt)} style={{ width: 'auto' }} />
+                            {opt}
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
+                  {yearVal(activePlot,'harvest_cover',year,'applies') === 'Ναι' && (
+                    <>
+                      <div className="row2">
+                        <div className="field">
+                          <label>Ημερομηνία Σποράς</label>
+                          <input type="date" value={yearVal(activePlot,'harvest_cover',year,'sow_date')} onChange={e => setYearField(activePlot,'harvest_cover',year,'sow_date',e.target.value)} />
+                        </div>
+                        <div className="field">
+                          <label>Ημερομηνία Τερματισμού</label>
+                          <input type="date" value={yearVal(activePlot,'harvest_cover',year,'end_date')} onChange={e => setYearField(activePlot,'harvest_cover',year,'end_date',e.target.value)} />
+                        </div>
+                      </div>
+                      <div className="field">
+                        <label>Μέθοδος Τερματισμού</label>
+                        <select value={yearVal(activePlot,'harvest_cover',year,'termination')} onChange={e => setYearField(activePlot,'harvest_cover',year,'termination',e.target.value)}>
+                          <option value="">Επιλέξτε...</option>
+                          <option>Ενσωμάτωση στο έδαφος</option>
+                          <option>Χημική Καταστροφή</option>
+                          <option>Βόσκηση</option>
+                          <option>Συγκομιδή</option>
+                        </select>
+                      </div>
+                      {yearVal(activePlot,'harvest_cover',year,'termination') === 'Συγκομιδή' && (
+                        <div className="field">
+                          <label>Απόδοση (kg/ha) *</label>
+                          <input required type="number" placeholder="π.χ. 1500" value={yearVal(activePlot,'harvest_cover',year,'yield')} onChange={e => setYearField(activePlot,'harvest_cover',year,'yield',e.target.value)} />
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               ))}
             </>
@@ -445,7 +498,11 @@ export default function Fields() {
             <>
               <div className="section-title">🧪 Αζωτούχα Λιπάσματα — Αγροτεμάχιο {activePlot}</div>
               <div className="section-sub">Τύπος, μήνας εφαρμογής και ποσότητα ανά έτος.</div>
-              {YEARS.map(year => (
+              <div className="field" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
+                <input type="checkbox" id={`no_fert_n_${activePlot}`} style={{ width: 'auto', accentColor: '#1a3d2b' }} checked={val(activePlot,'fertilizer_n','no_application') === 'true'} onChange={e => setField(activePlot,'fertilizer_n','no_application', e.target.checked ? 'true' : '')} />
+                <label htmlFor={`no_fert_n_${activePlot}`} style={{ fontWeight: '400', cursor: 'pointer', margin: 0 }}>Δεν εφαρμόστηκε Αζωτούχος Λίπανση</label>
+              </div>
+              {val(activePlot,'fertilizer_n','no_application') !== 'true' && YEARS.map(year => (
                 <div className="year-block" key={year}>
                   <div className="year-header">{year}</div>
                   <div className="row3">
@@ -478,7 +535,11 @@ export default function Fields() {
             <>
               <div className="section-title">🌿 Οργανικά Λιπάσματα — Αγροτεμάχιο {activePlot}</div>
               <div className="section-sub">Τύπος, μήνας εφαρμογής και ποσότητα ανά έτος.</div>
-              {YEARS.map(year => (
+              <div className="field" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
+                <input type="checkbox" id={`no_fert_org_${activePlot}`} style={{ width: 'auto', accentColor: '#1a3d2b' }} checked={val(activePlot,'fertilizer_org','no_application') === 'true'} onChange={e => setField(activePlot,'fertilizer_org','no_application', e.target.checked ? 'true' : '')} />
+                <label htmlFor={`no_fert_org_${activePlot}`} style={{ fontWeight: '400', cursor: 'pointer', margin: 0 }}>Δεν εφαρμόστηκε Οργανική Λίπανση</label>
+              </div>
+              {val(activePlot,'fertilizer_org','no_application') !== 'true' && YEARS.map(year => (
                 <div className="year-block" key={year}>
                   <div className="year-header">{year}</div>
                   <div className="row3">
@@ -499,6 +560,16 @@ export default function Fields() {
                     <div className="field">
                       <label>Ποσότητα (kg/ha)</label>
                       <input type="number" placeholder="π.χ. 500" value={yearVal(activePlot,'fertilizer_org',year,'qty')} onChange={e => setYearField(activePlot,'fertilizer_org',year,'qty',e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="row2">
+                    <div className="field">
+                      <label>Περιεκτικότητα σε Άζωτο (%)</label>
+                      <input type="number" step="0.1" placeholder="π.χ. 1.5" value={yearVal(activePlot,'fertilizer_org',year,'n_pct')} onChange={e => setYearField(activePlot,'fertilizer_org',year,'n_pct',e.target.value)} />
+                    </div>
+                    <div className="field">
+                      <label>Περιεκτικότητα σε Άνθρακα (%)</label>
+                      <input type="number" step="0.1" placeholder="π.χ. 12.0" value={yearVal(activePlot,'fertilizer_org',year,'c_pct')} onChange={e => setYearField(activePlot,'fertilizer_org',year,'c_pct',e.target.value)} />
                     </div>
                   </div>
                 </div>

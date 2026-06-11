@@ -8,21 +8,31 @@ const EQUIPMENT_SCHEMAS = {
   'Ελκυστήρας': {
     icon: '🚜',
     fields: [
-      { key: 'type', label: 'Τύπος', type: 'select', options: ['Δενδροκομικό', 'Αροτραίων', 'Αμπελουργικό', 'Γενικής χρήσης'] },
+      { key: 'type', label: 'Τύπος Ελκυστήρα', type: 'select', options: [
+        'Διαξονικός Ελκυστήρας (ανοιχτού πεδίου / δενδροκομικό)',
+        'Μονοαξονικός Ελκυστήρας / Μοτοσκαπτικό',
+      ]},
       { key: 'year', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2005' },
       { key: 'hp', label: 'Ιπποδύναμη (HP)', type: 'number', placeholder: 'π.χ. 120' },
-      { key: 'fuel', label: 'Τύπος καυσίμου', type: 'select', options: ['Πετρέλαιο', 'Βενζίνη', 'Πετρέλαιο + Biodiesel'] },
+      { key: 'fuel', label: 'Τύπος καυσίμου', type: 'select', options: ['Diesel', 'Βενζίνη', 'Βιοντίζελ'] },
     ],
     yearlyFields: [
       { key: 'hours', label: 'Ώρες λειτουργίας' },
       { key: 'fuel_consumption', label: 'Κατανάλωση καυσίμου (λίτρα)' },
     ],
   },
-  'Άροτρο': {
-    icon: '🌾',
+  'Μηχάνημα Κατεργασίας': {
+    icon: '⚙️',
     fields: [
-      { key: 'type', label: 'Τύπος', type: 'select', options: ['Αναστρεφόμενο', 'Δίυνο', 'Τρίυνο', 'Πολύυνο'] },
-      { key: 'width', label: 'Πλάτος εργασίας (μέτρα)', type: 'number', placeholder: 'π.χ. 1.5' },
+      { key: 'type', label: 'Τύπος Μηχανήματος Κατεργασίας', type: 'select', options: [
+        'Άροτρο με υνιά (Βαθιά συμβατική κατεργασία)',
+        'Δισκάροτρο',
+        'Υπεδαφοκαλλιεργητής / Ρίπερ',
+        'Φρέζα',
+        'Δισκοσβάρνα / Σβάρνα (Μειωμένη κατεργασία)',
+        'Μηχάνημα τοπικής κατεργασίας γραμμών (Strip-till)',
+      ]},
+      { key: 'width', label: 'Πλάτος εργασίας (μέτρα)', type: 'number', placeholder: 'π.χ. 2.5' },
       { key: 'year', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2010' },
     ],
     yearlyFields: [
@@ -30,25 +40,69 @@ const EQUIPMENT_SCHEMAS = {
       { key: 'hectares', label: 'Στρέμματα εφαρμογής' },
     ],
   },
-  'Καλλιεργητής': {
-    icon: '⚙️',
+  'Σπαρτική': {
+    icon: '🌱',
     fields: [
-      { key: 'type', label: 'Τύπος', type: 'select', options: ['Με ελατήρια', 'Βαρέως τύπου', 'Ρίπερ'] },
-      { key: 'bodies', label: 'Αριθμός σωμάτων', type: 'number', placeholder: 'π.χ. 9' },
-      { key: 'width', label: 'Πλάτος εργασίας (μέτρα)', type: 'number', placeholder: 'π.χ. 2.5' },
-      { key: 'year', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2008' },
+      { key: 'type', label: 'Τύπος Σπαρτικής', type: 'select', options: [
+        'Σπαρτική μηχανή απευθείας σποράς (No-till seeder)',
+        'Σπαρτική σιτηρών / ψυχανθών (Συμβατική)',
+        'Σπαρτική ακριβείας / πνευματική',
+        'Πατατοσπορέας',
+      ]},
+      { key: 'width', label: 'Πλάτος εργασίας (μέτρα)', type: 'number', placeholder: 'π.χ. 3.0' },
+      { key: 'year', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2015' },
     ],
     yearlyFields: [
       { key: 'hours', label: 'Ώρες λειτουργίας' },
       { key: 'hectares', label: 'Στρέμματα εφαρμογής' },
     ],
   },
-  'Φρέζα': {
-    icon: '🔄',
+  'Λιπασματοδιανομέας': {
+    icon: '📦',
     fields: [
-      { key: 'type', label: 'Τύπος', type: 'select', options: ['Σταθερή', 'Μετατοπιζόμενη'] },
-      { key: 'width', label: 'Πλάτος εργασίας (μέτρα)', type: 'number', placeholder: 'π.χ. 1.8' },
-      { key: 'year', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2012' },
+      { key: 'type', label: 'Τύπος Διανομέα Λιπάσματος', type: 'select', options: [
+        'Φυγοκεντρικός διανομέας',
+        'Διανομέας Οργανικής Λίπανσης / Κοπριάς',
+        'Σύστημα Υδρολίπανσης',
+        'Διανομέας μεταβλητής δόσης (Γεωργία Ακριβείας)',
+      ]},
+      { key: 'capacity', label: 'Χωρητικότητα (λίτρα)', type: 'number', placeholder: 'π.χ. 500' },
+      { key: 'year', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2016' },
+    ],
+    yearlyFields: [
+      { key: 'hours', label: 'Ώρες λειτουργίας' },
+      { key: 'hectares', label: 'Στρέμματα εφαρμογής' },
+    ],
+  },
+  'Ψεκαστικό': {
+    icon: '💧',
+    fields: [
+      { key: 'type', label: 'Τύπος Ψεκαστικού', type: 'select', options: [
+        'Ψεκαστικό γραμμικών καλλιεργειών (Ράμπα)',
+        'Μηχανοκίνητος ψεκαστήρας (Νεφελοψεκαστήρας / Τουρμπίνα)',
+        'Επινώτιος ψεκαστήρας',
+        'Μηχανοκίνητος θειωτήρας',
+        'Ψεκαστικό μεταβλητής δόσης (Γεωργία Ακριβείας)',
+      ]},
+      { key: 'capacity', label: 'Χωρητικότητα (λίτρα)', type: 'number', placeholder: 'π.χ. 1000' },
+      { key: 'year', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2018' },
+    ],
+    yearlyFields: [
+      { key: 'hours', label: 'Ώρες λειτουργίας' },
+      { key: 'hectares', label: 'Στρέμματα εφαρμογής' },
+    ],
+  },
+  'Μηχάνημα Συγκομιδής': {
+    icon: '🌾',
+    fields: [
+      { key: 'type', label: 'Τύπος Μηχανήματος Συγκομιδής', type: 'select', options: [
+        'Θεριζοαλωνιστική μηχανή (Κομπίνα)',
+        'Βαμβακοσυλλεκτική μηχανή',
+        'Χορτοδετική / Χορτοσυλλεκτική μηχανή',
+        'Τευτλοεξαγωγέας / Πατατοεξαγωγέας',
+        'Μηχανή συγκομιδής βιομηχανικής τομάτας / καρότων',
+      ]},
+      { key: 'year', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2018' },
     ],
     yearlyFields: [
       { key: 'hours', label: 'Ώρες λειτουργίας' },
@@ -61,33 +115,6 @@ const EQUIPMENT_SCHEMAS = {
       { key: 'type', label: 'Τύπος', type: 'select', options: ['Σφυριά', 'Μαχαίρια'] },
       { key: 'width', label: 'Πλάτος εργασίας (μέτρα)', type: 'number', placeholder: 'π.χ. 2.0' },
       { key: 'year', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2015' },
-    ],
-    yearlyFields: [
-      { key: 'hours', label: 'Ώρες λειτουργίας' },
-      { key: 'hectares', label: 'Στρέμματα εφαρμογής' },
-    ],
-  },
-  'Λιπασματοδιανομέας': {
-    icon: '📦',
-    fields: [
-      { key: 'type', label: 'Τύπος', type: 'select', options: ['Μονός δίσκος', 'Διπλός δίσκος', 'Συρόμενος'] },
-      { key: 'spread_width', label: 'Πλάτος διασποράς (μέτρα)', type: 'number', placeholder: 'π.χ. 12' },
-      { key: 'capacity', label: 'Χωρητικότητα (λίτρα)', type: 'number', placeholder: 'π.χ. 500' },
-      { key: 'year', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2016' },
-    ],
-    yearlyFields: [
-      { key: 'hours', label: 'Ώρες λειτουργίας' },
-      { key: 'hectares', label: 'Στρέμματα εφαρμογής' },
-    ],
-  },
-  'Ψεκαστικό': {
-    icon: '💧',
-    fields: [
-      { key: 'type', label: 'Τύπος', type: 'select', options: ['Νεφελοψεκαστήρας για δέντρα', 'Ψεκαστικό μπάρας', 'Νεφελοψεκαστήρας'] },
-      { key: 'electrostatic', label: 'Ηλεκτροστατικός ψεκασμός', type: 'select', options: ['Ναι', 'Όχι'] },
-      { key: 'tow', label: 'Τρόπος ρυμούλκησης', type: 'select', options: ['Συρόμενο', 'Αναρτόμενο'] },
-      { key: 'capacity', label: 'Χωρητικότητα (λίτρα)', type: 'number', placeholder: 'π.χ. 1000' },
-      { key: 'year', label: 'Χρονολογία κατασκευής', type: 'number', placeholder: 'π.χ. 2018' },
     ],
     yearlyFields: [
       { key: 'hours', label: 'Ώρες λειτουργίας' },
