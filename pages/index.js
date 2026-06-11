@@ -318,7 +318,7 @@ export default function Home() {
     const e = {};
     if (step === 1 && !onb.type) e.type = true;
     if (step === 2) {
-      if (onb.type !== 'Αγροτικός συνεταιρισμός') {
+      if (onb.type === 'Μεμονωμένος αγρότης') {
         if (!onb.firstName) e.firstName = true;
         if (!onb.lastName) e.lastName = true;
         if (!onb.email || !/\S+@\S+/.test(onb.email)) e.email = true;
@@ -335,6 +335,9 @@ export default function Home() {
       if (onb.type === 'Εταιρεία') {
         if (!onb.orgName) e.orgName = true;
         if (!onb.companyRepName) e.companyRepName = true;
+        if (!onb.email || !/\S+@\S+/.test(onb.email)) e.email = true;
+        if (!onb.phone) e.phone = true;
+        else if (!/^69\d{8}$/.test(onb.phone)) e.phoneFormat = true;
       }
     }
     if (step === 3) { if (!onb.region) e.region = true; if (!onb.hectares) e.hectares = true; if (!onb.plots) e.plots = true; }
@@ -575,7 +578,7 @@ export default function Home() {
               {onbStep === 2 && (<>
                 <div className="step-title">Στοιχεία επικοινωνίας</div>
                 <div className="step-sub">Συμπληρώστε τα στοιχεία σας για να επικοινωνήσουμε μαζί σας.</div>
-                {onb.type !== 'Αγροτικός συνεταιρισμός' && (<>
+                {onb.type === 'Μεμονωμένος αγρότης' && (<>
                   <div className="row2">
                     <div className="field"><label>Όνομα <span className="required">*</span></label><input className={onbErrors.firstName ? 'err' : ''} value={onb.firstName} onChange={e => setOnbField('firstName', e.target.value)} placeholder="π.χ. Γιώργος" /></div>
                     <div className="field"><label>Επώνυμο <span className="required">*</span></label><input className={onbErrors.lastName ? 'err' : ''} value={onb.lastName} onChange={e => setOnbField('lastName', e.target.value)} placeholder="π.χ. Παπαδόπουλος" /></div>
@@ -601,6 +604,18 @@ export default function Home() {
                       <label>Ονοματεπώνυμο εκπροσώπου <span className="required">*</span></label>
                       <input className={onbErrors.companyRepName ? 'err' : ''} value={onb.companyRepName} onChange={e => setOnbField('companyRepName', e.target.value)} placeholder="π.χ. Μαρία Παπανικολάου" />
                       {onbErrors.companyRepName && <div className="err-msg">Παρακαλούμε εισάγετε ονοματεπώνυμο εκπροσώπου.</div>}
+                    </div>
+                    <div className="row2">
+                      <div className="field">
+                        <label>Email εκπροσώπου <span className="required">*</span></label>
+                        <input className={onbErrors.email ? 'err' : ''} type="email" value={onb.email} onChange={e => setOnbField('email', e.target.value)} placeholder="email@example.com" />
+                        {onbErrors.email && <div className="err-msg">Εισάγετε έγκυρη διεύθυνση email.</div>}
+                      </div>
+                      <div className="field">
+                        <label>Τηλέφωνο εκπροσώπου <span className="required">*</span></label>
+                        <input className={onbErrors.phone || onbErrors.phoneFormat ? 'err' : ''} type="tel" value={onb.phone} onChange={e => setOnbField('phone', e.target.value)} placeholder="π.χ. 6901234567" />
+                        {(onbErrors.phone || onbErrors.phoneFormat) && <div className="err-msg">Μορφή 69XXXXXXXX</div>}
+                      </div>
                     </div>
                   </div>
                 )}
