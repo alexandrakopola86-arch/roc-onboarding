@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   const typeMap = { "Μεμονωμένος αγρότης": "farmer", "Αγρότης": "farmer", "Συνεταιρισμός": "cooperative", "Εταιρεία": "company" };
   const userType = typeMap[rawType] || rawType; // "farmer" | "cooperative" | "company"
     
-χconst name =
+const name =
       body.fullName || (body.onboarding?.firstName ? body.onboarding.firstName + " " + (body.onboarding.lastName || "") : null) || // Αγρότης: πλήρες όνομα
     body.cooperativeName || body.onboarding?.orgName || // Συνεταιρισμός/Εταιρεία
       body.companyName ||     // Εταιρεία: όνομα εταιρείας
