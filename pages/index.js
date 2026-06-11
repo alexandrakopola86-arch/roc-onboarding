@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 
 const ALL_YEARS = [2021, 2022, 2023, 2024, 2025];
@@ -171,6 +171,64 @@ export default function Home() {
   const [sectionErrors, setSectionErrors] = useState('');
   const [loading, setLoading] = useState(false);
   const [submittedAt, setSubmittedAt] = useState(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).get('test') !== '1') return;
+
+    const testYears = {};
+    ALL_YEARS.forEach(yr => { testYears[yr] = { hours: '300', fuel_lt: '1100' }; });
+
+    const testTillage = {};
+    const testCrops = {};
+    const testHarvestMain = {};
+    const testFertN = {};
+    ALL_YEARS.forEach(yr => {
+      testTillage[yr]      = { type: 'Συμβατική', month: 'Μάρτιος', depth: '25' };
+      testCrops[yr]        = { main: 'Ελιά ελαιοποιήσιμη', cover: 'Καμία', herbicides: 'Όχι' };
+      testHarvestMain[yr]  = { sow: 'Σεπτέμβριος', harvest: 'Νοέμβριος', yield: '3000' };
+      testFertN[yr]        = { type: 'Αμμωνιακή ουρία', month: 'Φεβρουάριος', qty: '150' };
+    });
+
+    setOnb({
+      type: 'Μεμονωμένος αγρότης',
+      firstName: 'Γιώργος', lastName: 'Παπαδόπουλος',
+      email: 'test@rootsofcarbon.gr', phone: '6901234567', orgName: '',
+      region: 'Αττική', hectares: '5', plots: '1',
+      crops: ['Ελιά'], equipment: ['Ελκυστήρας'],
+      farm_size: 'Μικρός παραγωγός (έως 10 ha)',
+      motivation: 'Carbon credits',
+      carbon_measured: 'Όχι, είναι η πρώτη φορά',
+      agronomist: 'Όχι', source: 'Αναζήτηση στο διαδίκτυο', comments: '',
+    });
+
+    setEquipData({
+      'Ελκυστήρας': {
+        type: 'Διαξονικός Ελκυστήρας (ανοιχτού πεδίου / δενδροκομικό)',
+        year_built: '2010', hp: '90', fuel: 'Diesel',
+        renewal: 'Όχι', maintenance: 'Τακτική',
+        years: testYears,
+      },
+    });
+
+    setFieldData({
+      p1: {
+        info: {
+          region: 'Αττική', area: '5', gis: '',
+          soil_analysis: 'Όχι', soil_type: 'Πηλώδες', cover_crops: 'Όχι',
+          lime: 'Όχι', irrigated: 'Όχι', smart_irr: 'Όχι', grazing: 'Όχι',
+          residues: 'Παραμονή/Ενσωμάτωση', notes: '',
+        },
+        tillage: testTillage,
+        crops: testCrops,
+        harvest_main: testHarvestMain,
+        fertilizer_n: testFertN,
+      },
+    });
+
+    setSubmittedAt(new Date());
+    setPhase('done');
+  }, []);
 
   const setOnbField = (k, v) => setOnb(p => ({ ...p, [k]: v }));
   const toggleArr = (k, v) => setOnb(p => ({ ...p, [k]: p[k].includes(v) ? p[k].filter(x => x !== v) : [...p[k], v] }));
