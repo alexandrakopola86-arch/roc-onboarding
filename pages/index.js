@@ -597,7 +597,7 @@ export default function Home() {
                     {onbErrors.orgName && <div className="err-msg">Παρακαλούμε εισάγετε την επωνυμία.</div>}
                   </div>
                 )}
-                {onb.type === 'Εταιρεία' && (
+                {onb.type === 'Εταιρεία' && (<>
                   <div className="member-box">
                     <div className="member-box-header">🏢 Στοιχεία εκπροσώπου εταιρείας</div>
                     <div className="field">
@@ -605,20 +605,14 @@ export default function Home() {
                       <input className={onbErrors.companyRepName ? 'err' : ''} value={onb.companyRepName} onChange={e => setOnbField('companyRepName', e.target.value)} placeholder="π.χ. Μαρία Παπανικολάου" />
                       {onbErrors.companyRepName && <div className="err-msg">Παρακαλούμε εισάγετε ονοματεπώνυμο εκπροσώπου.</div>}
                     </div>
-                    <div className="row2">
-                      <div className="field">
-                        <label>Email εκπροσώπου <span className="required">*</span></label>
-                        <input className={onbErrors.email ? 'err' : ''} type="email" value={onb.email} onChange={e => setOnbField('email', e.target.value)} placeholder="email@example.com" />
-                        {onbErrors.email && <div className="err-msg">Εισάγετε έγκυρη διεύθυνση email.</div>}
-                      </div>
-                      <div className="field">
-                        <label>Τηλέφωνο εκπροσώπου <span className="required">*</span></label>
-                        <input className={onbErrors.phone || onbErrors.phoneFormat ? 'err' : ''} type="tel" value={onb.phone} onChange={e => setOnbField('phone', e.target.value)} placeholder="π.χ. 6901234567" />
-                        {(onbErrors.phone || onbErrors.phoneFormat) && <div className="err-msg">Μορφή 69XXXXXXXX</div>}
-                      </div>
-                    </div>
                   </div>
-                )}
+                  <div className="field"><label>Διεύθυνση email <span className="required">*</span></label><input className={onbErrors.email ? 'err' : ''} type="email" value={onb.email} onChange={e => setOnbField('email', e.target.value)} placeholder="email@example.com" />{onbErrors.email && <div className="err-msg">Εισάγετε έγκυρη διεύθυνση email.</div>}</div>
+                  <div className="field">
+                    <label>Τηλέφωνο επικοινωνίας <span className="required">*</span></label>
+                    <input className={onbErrors.phone || onbErrors.phoneFormat ? 'err' : ''} type="tel" value={onb.phone} onChange={e => setOnbField('phone', e.target.value)} placeholder="π.χ. 6901234567" />
+                    {(onbErrors.phone || onbErrors.phoneFormat) && <div className="err-msg">Το κινητό πρέπει να είναι μορφής 69XXXXXXXX</div>}
+                  </div>
+                </>)}
                 {onb.type === 'Αγροτικός συνεταιρισμός' && (
                   <>
                     <div className="member-box">
