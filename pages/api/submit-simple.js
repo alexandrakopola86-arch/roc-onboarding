@@ -7,6 +7,18 @@ export default async function handler(req, res) {
     const onb = body.onboarding || {};
     const name = onb.firstName ? onb.firstName + " " + (onb.lastName || "") : onb.orgName || "Αγνωστος";
 
+    const eq = body.equipment || {};
+    let equipmentText = "";
+    Object.entries(eq).forEach(([machine, data]) => {
+      equipmentText += `\n  ${machine}: ${JSON.stringify(data)}`;
+    });
+
+    const fields = body.fields || {};
+    let fieldsText = "";
+    Object.entries(fields).forEach(([plot, data]) => {
+      fieldsText += `\n  ${plot}: ${JSON.stringify(data)}`;
+    });
+
     const message = `
 ΝΕΟΣ ΕΓΓΕΓΡΑΜΜΕΝΟΣ - RoC Onboarding
 =====================================
@@ -22,6 +34,10 @@ EMAIL: ${onb.email || "-"}
 ΚΙΝΗΤΡΟ: ${onb.motivation || "-"}
 ΕΞΟΠΛΙΣΜΟΣ: ${onb.equipment || "-"}
 ΠΗΓΗ: ${onb.source || "-"}
+
+--- ΕΞΟΠΛΙΣΜΟΣ ΛΕΠΤΟΜΕΡΕΙΕΣ ---${equipmentText || " -"}
+
+--- ΑΓΡΟΤΕΜΑΧΙΑ ΛΕΠΤΟΜΕΡΕΙΕΣ ---${fieldsText || " -"}
     `.trim();
 
     const r = await fetch("https://formspree.io/f/xqeoddwd", {
@@ -35,7 +51,7 @@ EMAIL: ${onb.email || "-"}
       }),
     });
 
-    const data = await r.json();
+    await r.json();
     return res.status(200).json({ success: true });
   } catch (err) {
     return res.status(500).json({ error: err.message });
