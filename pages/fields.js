@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
@@ -24,10 +24,82 @@ const SECTIONS = [
   { key: 'harvest_main', label: 'Συγκομιδή Κύρια', icon: '📅' },
   { key: 'harvest_cover', label: 'Επίσπορη', icon: '🌱' },
   { key: 'certification', label: 'Πιστοποίηση', icon: '📜' },
-  { key: 'fertilizer_n', label: 'Λιπάσματα Αζ.', icon: '🧪' },
-  { key: 'fertilizer_org', label: 'Λιπάσματα Οργ.', icon: '🌿' },
+  { key: 'fertilizer_n', label: 'Λιπάσματα Αζωτούχα', icon: '🧪' },
+  { key: 'fertilizer_org', label: 'Λιπάσματα Οργανικά', icon: '🌿' },
   { key: 'legitimacy', label: 'Νομιμοποιητικά', icon: '📄' },
 ];
+
+function MapPicker({ value, onChange }) {
+  const containerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const initMap = () => {
+      if (!window.L || !containerRef.current || mapRef.current) return;
+      const L = window.L;
+      const map = L.map(containerRef.current, { zoomControl: true }).setView([38.5, 22.0], 6);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors', maxZoom: 19,
+      }).addTo(map);
+      if (value) {
+        const [lat, lng] = value.split(',').map(Number);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          markerRef.current = L.marker([lat, lng]).addTo(map);
+          map.setView([lat, lng], 13);
+        }
+      }
+      map.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        const coords = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+        onChange(coords);
+        if (markerRef.current) { markerRef.current.setLatLng([lat, lng]); }
+        else { markerRef.current = L.marker([lat, lng]).addTo(map); }
+      });
+      mapRef.current = map;
+    };
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link'); link.id = 'leaflet-css';
+      link.rel = 'stylesheet'; link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+    if (window.L) { initMap(); }
+    else if (!document.getElementById('leaflet-js')) {
+      const s = document.createElement('script'); s.id = 'leaflet-js';
+      s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      s.onload = initMap; document.body.appendChild(s);
+    } else { document.getElementById('leaflet-js').addEventListener('load', initMap); }
+    return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; markerRef.current = null; } };
+  }, []);
+
+  const handleUseLocation = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      const coords = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+      onChange(coords);
+      if (window.L && mapRef.current) {
+        mapRef.current.setView([lat, lng], 14);
+        if (markerRef.current) { markerRef.current.setLatLng([lat, lng]); }
+        else { markerRef.current = window.L.marker([lat, lng]).addTo(mapRef.current); }
+      }
+    });
+  };
+
+  return (
+    <div>
+      <div ref={containerRef} style={{ height: '280px', width: '100%', borderRadius: '8px', border: '1px solid #d0d8cc', marginBottom: '8px', position: 'relative', zIndex: 0 }} />
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
+        <button type="button" onClick={handleUseLocation} style={{ padding: '6px 14px', border: '1px solid #4a8c2a', borderRadius: '6px', background: '#f0f7ec', color: '#1a3d2b', fontSize: '12px', cursor: 'pointer', fontFamily: 'Inter,sans-serif', fontWeight: '500' }}>
+          📍 Χρήση αυτής της τοποθεσίας
+        </button>
+        <span style={{ fontSize: '12px', color: '#888' }}>ή κάντε κλικ στον χάρτη</span>
+      </div>
+      {value && <div style={{ fontSize: '12px', color: '#4a8c2a', marginTop: '2px' }}>✓ Συντεταγμένες: {value}</div>}
+    </div>
+  );
+}
 
 export default function Fields() {
   const router = useRouter();
@@ -41,6 +113,7 @@ export default function Fields() {
   const [certFiles, setCertFiles] = useState({});
   const [gisFiles, setGisFiles] = useState({});
   const [soilFiles, setSoilFiles] = useState({});
+  const [legalErrors, setLegalErrors] = useState({});
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -133,6 +206,25 @@ export default function Fields() {
       setSubmitted(true);
     } catch (e) { console.error(e); }
     setLoading(false);
+  };
+
+  const validateAndSubmit = () => {
+    const errs = {};
+    for (let p = 1; p <= numPlots; p++) {
+      const files = legalFiles[`plot${p}`];
+      const hasFile = files && files.length > 0;
+      const hasDecl = formData[`plot${p}`]?.legitimacy?.carbon_declaration === 'true';
+      if (!hasFile) errs[`file_${p}`] = true;
+      if (!hasDecl) errs[`decl_${p}`] = true;
+    }
+    if (Object.keys(errs).length > 0) {
+      setLegalErrors(errs);
+      setActiveSection('legitimacy');
+      const firstPlotErr = parseInt(Object.keys(errs)[0].split('_')[1]);
+      setActivePlot(firstPlotErr);
+      return;
+    }
+    submit();
   };
 
   if (submitted) return (
@@ -237,17 +329,20 @@ export default function Fields() {
               </div>
 
               <div className="field">
-                <label>Συντεταγμένες / Αρχείο GIS</label>
+                <label>Συντεταγμένες (κάντε κλικ στον χάρτη ή χρησιμοποιήστε GPS)</label>
                 <input
                   type="text"
-                  placeholder="Συντεταγμένες ή σύνδεσμος (π.χ. Google Maps link)"
+                  placeholder="π.χ. 38.246111,21.735556"
                   value={val(activePlot,'info','gis_link')}
                   onChange={e => setField(activePlot,'info','gis_link',e.target.value)}
+                  style={{ marginBottom: '8px' }}
                 />
-                <a href="https://maps.google.com" target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#4a8c2a', display: 'inline-block', marginTop: '4px' }}>
-                  Άνοιγμα Google Maps για εύρεση συντεταγμένων
-                </a>
-                <div style={{ marginTop: '8px' }}>
+                <MapPicker
+                  key={activePlot}
+                  value={val(activePlot,'info','gis_link')}
+                  onChange={v => setField(activePlot,'info','gis_link',v)}
+                />
+                <div style={{ marginTop: '10px' }}>
                   <label style={{ marginBottom: '4px' }}>Αρχείο KML/Shapefile</label>
                   <input
                     type="file"
@@ -436,7 +531,7 @@ export default function Fields() {
                       {idx > 0 && (
                         <button type="button" style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '11px', padding: '2px 8px', border: '1px solid #e0a0a0', borderRadius: '4px', background: 'white', color: '#c0392b', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} onClick={() => removeTillageEntry(activePlot, year, idx)}>✕</button>
                       )}
-                      <div className="row3">
+                      <div className="row2">
                         <div className="field">
                           <label>Τύπος κατεργασίας</label>
                           <select value={entry.type || ''} onChange={e => setTillageEntry(activePlot, year, idx, 'type', e.target.value)}>
@@ -447,6 +542,15 @@ export default function Fields() {
                             <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={entry.type_other || ''} onChange={e => setTillageEntry(activePlot, year, idx, 'type_other', e.target.value)} />
                           )}
                         </div>
+                        <div className="field">
+                          <label>Μήνας εφαρμογής</label>
+                          <select value={entry.month || ''} onChange={e => setTillageEntry(activePlot, year, idx, 'month', e.target.value)}>
+                            <option value="">Επιλέξτε...</option>
+                            {MONTHS.map(m => <option key={m}>{m}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="row2">
                         <div className="field">
                           <label>Βάθος εφαρμογής (cm)</label>
                           <input type="number" placeholder="π.χ. 25" value={entry.depth || ''} onChange={e => setTillageEntry(activePlot, year, idx, 'depth', e.target.value)} />
@@ -640,11 +744,18 @@ export default function Fields() {
             <>
               <div className="section-title">🧪 Αζωτούχα Λιπάσματα — Αγροτεμάχιο {activePlot}</div>
               <div className="section-sub">Τύπος, μήνας εφαρμογής και ποσότητα ανά έτος.</div>
-              <div className="field" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
-                <input type="checkbox" id={`no_fert_n_${activePlot}`} style={{ width: 'auto', accentColor: '#1a3d2b' }} checked={val(activePlot,'fertilizer_n','no_application') === 'true'} onChange={e => setField(activePlot,'fertilizer_n','no_application', e.target.checked ? 'true' : '')} />
-                <label htmlFor={`no_fert_n_${activePlot}`} style={{ fontWeight: '400', cursor: 'pointer', margin: 0 }}>Δεν εφαρμόστηκε Αζωτούχος Λίπανση</label>
+              <div className="field" style={{ marginBottom: '1.5rem' }}>
+                <label>Εφαρμόσατε αζωτούχα λιπάσματα;</label>
+                <div className="radio-row" style={{ marginTop: '6px' }}>
+                  {['Ναι', 'Όχι'].map(opt => (
+                    <label key={opt} className="radio-opt">
+                      <input type="radio" name={`fert_n_applied_${activePlot}`} value={opt} checked={val(activePlot,'fertilizer_n','applied') === opt} onChange={() => setField(activePlot,'fertilizer_n','applied',opt)} style={{ width: 'auto' }} />
+                      {opt}
+                    </label>
+                  ))}
+                </div>
               </div>
-              {val(activePlot,'fertilizer_n','no_application') !== 'true' && YEARS.map(year => (
+              {val(activePlot,'fertilizer_n','applied') === 'Ναι' && YEARS.map(year => (
                 <div className="year-block" key={year}>
                   <div className="year-header">{year}</div>
                   <div className="row3">
@@ -680,11 +791,18 @@ export default function Fields() {
             <>
               <div className="section-title">🌿 Οργανικά Λιπάσματα — Αγροτεμάχιο {activePlot}</div>
               <div className="section-sub">Τύπος, μήνας εφαρμογής και ποσότητα ανά έτος.</div>
-              <div className="field" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem' }}>
-                <input type="checkbox" id={`no_fert_org_${activePlot}`} style={{ width: 'auto', accentColor: '#1a3d2b' }} checked={val(activePlot,'fertilizer_org','no_application') === 'true'} onChange={e => setField(activePlot,'fertilizer_org','no_application', e.target.checked ? 'true' : '')} />
-                <label htmlFor={`no_fert_org_${activePlot}`} style={{ fontWeight: '400', cursor: 'pointer', margin: 0 }}>Δεν εφαρμόστηκε Οργανική Λίπανση</label>
+              <div className="field" style={{ marginBottom: '1.5rem' }}>
+                <label>Εφαρμόσατε οργανικά λιπάσματα;</label>
+                <div className="radio-row" style={{ marginTop: '6px' }}>
+                  {['Ναι', 'Όχι'].map(opt => (
+                    <label key={opt} className="radio-opt">
+                      <input type="radio" name={`fert_org_applied_${activePlot}`} value={opt} checked={val(activePlot,'fertilizer_org','applied') === opt} onChange={() => setField(activePlot,'fertilizer_org','applied',opt)} style={{ width: 'auto' }} />
+                      {opt}
+                    </label>
+                  ))}
+                </div>
               </div>
-              {val(activePlot,'fertilizer_org','no_application') !== 'true' && YEARS.map(year => (
+              {val(activePlot,'fertilizer_org','applied') === 'Ναι' && YEARS.map(year => (
                 <div className="year-block" key={year}>
                   <div className="year-header">{year}</div>
                   <div className="row3">
@@ -731,28 +849,29 @@ export default function Fields() {
               <div className="section-title">📄 Νομιμοποιητικά — Αγροτεμάχιο {activePlot}</div>
               <div className="section-sub">Δικαιολογητικά και υπεύθυνη δήλωση για τα αγροτεμάχια.</div>
               <div className="field">
-                <label>ΟΣΔΕ / Ενοικιαστήρια (αρχεία)</label>
+                <label>ΟΣΔΕ / Ενοικιαστήρια (αρχεία) *</label>
                 <input
                   type="file"
                   multiple
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={e => setLegalFiles(prev => ({ ...prev, [`plot${activePlot}`]: e.target.files }))}
+                  onChange={e => { setLegalFiles(prev => ({ ...prev, [`plot${activePlot}`]: e.target.files })); setLegalErrors(prev => ({ ...prev, [`file_${activePlot}`]: false })); }}
                   style={{ padding: '8px 0', border: 'none' }}
                 />
+                {legalErrors[`file_${activePlot}`] && <div style={{ color: '#c0392b', fontSize: '12px', marginTop: '4px' }}>Απαιτείται τουλάχιστον ένα αρχείο ΟΣΔΕ/Ενοικιαστήριο.</div>}
               </div>
               <div className="field" style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                 <input
                   type="checkbox"
                   id={`carbon_decl_${activePlot}`}
-                  required
                   style={{ width: 'auto', marginTop: '3px', flexShrink: 0, accentColor: '#1a3d2b' }}
                   checked={val(activePlot,'legitimacy','carbon_declaration') === 'true'}
-                  onChange={e => setField(activePlot,'legitimacy','carbon_declaration', e.target.checked ? 'true' : '')}
+                  onChange={e => { setField(activePlot,'legitimacy','carbon_declaration', e.target.checked ? 'true' : ''); setLegalErrors(prev => ({ ...prev, [`decl_${activePlot}`]: false })); }}
                 />
                 <label htmlFor={`carbon_decl_${activePlot}`} style={{ fontWeight: '400', cursor: 'pointer', lineHeight: '1.5' }}>
                   Δηλώνω υπεύθυνα ότι τα αναγραφόμενα αγροτεμάχια δεν συμμετέχουν σε κανένα άλλο πρόγραμμα Carbon Credits *
                 </label>
               </div>
+              {legalErrors[`decl_${activePlot}`] && <div style={{ color: '#c0392b', fontSize: '12px', marginTop: '-8px', marginBottom: '8px' }}>Η δήλωση είναι υποχρεωτική.</div>}
             </>
           )}
 
@@ -771,7 +890,7 @@ export default function Fields() {
                 Αγροτεμάχιο {activePlot + 1} →
               </button>
             ) : (
-              <button className="btn btn-pri" onClick={submit} disabled={loading}>
+              <button className="btn btn-pri" onClick={validateAndSubmit} disabled={loading}>
                 {loading ? 'Υποβολή...' : 'Υποβολή φόρμας ✓'}
               </button>
             )}

@@ -293,12 +293,15 @@ export default function Equipment() {
         </div>
 
         <div className="tabs">
-          {activeEquipment.map(eq => (
-            <button key={eq} className={`tab ${activeSection === eq ? 'active' : ''}`} onClick={() => setActiveSection(eq)}>
-              <span>{EQUIPMENT_SCHEMAS[eq].icon}</span>
-              {eq}
-            </button>
-          ))}
+          {activeEquipment.map(eq => {
+            const tabLabel = eq === 'Άλλος εξοπλισμός' ? (formData[eq]?.machines?.[0]?.type || eq) : eq;
+            return (
+              <button key={eq} className={`tab ${activeSection === eq ? 'active' : ''}`} onClick={() => setActiveSection(eq)}>
+                <span>{EQUIPMENT_SCHEMAS[eq].icon}</span>
+                {tabLabel}
+              </button>
+            );
+          })}
         </div>
 
         <div className="progress-dots">
