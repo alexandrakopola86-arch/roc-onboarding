@@ -56,6 +56,17 @@ const name =
       folder = await createFolder(accessToken, parentFolderId, folderName);
     }
 
+    // Send email notification via Formspree
+    try {
+      await fetch("https://formspree.io/f/xqeoddwd", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...body, _subject: "Νέα εγγραφή RoC: " + name }),
+      });
+    } catch (emailErr) {
+      console.error("Formspree error:", emailErr);
+    }
+
     return res.status(200).json({
       success: true,
       folderId: folder.id,
