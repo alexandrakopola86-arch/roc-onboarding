@@ -4,19 +4,28 @@ import { useRouter } from 'next/router';
 
 const YEARS = [2021, 2022, 2023, 2024, 2025];
 const MONTHS = ['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
-const TILLAGE_TYPES = ['Συμβατική', 'Μειωμένη', 'Strip-till', 'Ακαλλιέργεια/No-till'];
-const CROP_LIST = ['Ελιά ελαιοποιήσιμη', 'Ελιά επιτραπέζια', 'Βαμβάκι', 'Μαλακό σιτάρι', 'Σκληρό σιτάρι', 'Κριθάρι', 'Αραβόσιτος', 'Βρώμη', 'Λούπινο', 'Ηλίανθος', 'Σόγια', 'Σουσάμι', 'Βίκος', 'Κουκί', 'Αγρανάπαυση', 'Πράσινο ακτινίδιο', 'Αμπέλι', 'Εσπεριδοειδή', 'Κηπευτικά', 'Άλλο', 'Καμία'];
-const FERTILIZER_TYPES = ['Στερεό', 'Υγρό', 'Διαφυλλικό'];
-const ORGANIC_TYPES = ['Κοπριά βοοειδών', 'Υδαρής κοπριά βοοειδών (slurry)', 'Κοπριά χοίρων', 'Υδαρής κοπριά χοίρων', 'Κοπριά πουλερικών/Ορνιθώνα', 'Κοπριά αιγοπροβάτων', 'Κομπόστ', 'Χώνευμα/Υπολείμματα Βιοαερίου (Digestate)'];
+const TILLAGE_TYPES = ['Συμβατική', 'Μειωμένη', 'Strip-till', 'Ακαλλιέργεια/No-till', 'Άλλο'];
+const CROP_LIST = ['Ελιά ελαιοποιήσιμη','Ελιά επιτραπέζια','Βαμβάκι','Μαλακό σιτάρι','Σκληρό σιτάρι','Κριθάρι','Αραβόσιτος','Βρώμη','Λούπινο','Ηλίανθος','Σόγια','Σουσάμι','Βίκος','Κουκί','Αγρανάπαυση','Πράσινο ακτινίδιο','Αμπέλι','Εσπεριδοειδή','Κηπευτικά','Άλλο','Καμία'];
+const ORGANIC_TYPES = ['Κοπριά βοοειδών','Υδαρής κοπριά βοοειδών (slurry)','Κοπριά χοίρων','Υδαρής κοπριά χοίρων','Κοπριά πουλερικών/Ορνιθώνα','Κοπριά αιγοπροβάτων','Κομπόστ','Χώνευμα/Υπολείμματα Βιοαερίου (Digestate)','Άλλο'];
+const NITROGEN_TYPES = ['Αμμωνιακή ουρία (46-0-0)','Θειική αμμωνία','Νιτρική αμμωνία','Νιτρική αμμωνία + ασβέστης (CAN)','Υγρή αμμωνία','Διαλύματα ουρίας-αμμωνίου (UAN)','Σύνθετο λίπασμα (π.χ. NPK)','Διαφυλλικό αζωτούχο','Άλλο'];
+const IRRIGATION_TYPES = ['Στάγδην','Μπεκ/Micro-sprinklers','Καρούλια/Κανόνια','Ράμπα οριζόντιου ποτίσματος','Κατάκλυση/Επιφανειακή','Άλλο'];
+const PUMP_TYPES = ['Ηλεκτροκίνητη','Πετρελαιοκίνητη (Diesel)','Βενζινοκίνητη','Φωτοβολταϊκό/ΑΠΕ','Αρδευτικό δίκτυο ΤΟΕΒ','Άλλο'];
+const FUEL_TYPES = ['Diesel','Βενζίνη','Ρεύμα Δικτύου','Άλλο'];
+const LIME_TYPES = ['Ασβεστιτικός','Δολομιτικός','Άλλο'];
+const SOIL_TYPES = ['Αμμώδες','Αργιλώδες','Πηλώδες','Αμμοπηλώδες','Αργιλοπηλώδες','Άλλο'];
+const RESIDUES_OPTIONS = ['Παραμονή/Ενσωμάτωση','Απομάκρυνση','Καύση','Άλλο'];
+const CERT_TYPES = ['Βιολογική γεωργία','GlobalG.A.P.','AGRO 2.1-2.2','Rainforest Alliance','Demeter','Άλλο'];
+const TERMINATION_OPTIONS = ['Ενσωμάτωση στο έδαφος','Χημική Καταστροφή','Βόσκηση','Συγκομιδή','Άλλο'];
 
 const SECTIONS = [
   { key: 'info', label: 'Στοιχεία', icon: '📋' },
   { key: 'tillage', label: 'Κατεργασία', icon: '🔨' },
   { key: 'crops', label: 'Καλλιέργειες', icon: '🌾' },
   { key: 'harvest_main', label: 'Συγκομιδή Κύρια', icon: '📅' },
-  { key: 'harvest_cover', label: 'Συγκομιδή Επίσπορη', icon: '📅' },
-  { key: 'fertilizer_n', label: 'Λιπάσματα Αζωτούχα', icon: '🧪' },
-  { key: 'fertilizer_org', label: 'Λιπάσματα Οργανικά', icon: '🌿' },
+  { key: 'harvest_cover', label: 'Επίσπορη', icon: '🌱' },
+  { key: 'certification', label: 'Πιστοποίηση', icon: '📜' },
+  { key: 'fertilizer_n', label: 'Λιπάσματα Αζ.', icon: '🧪' },
+  { key: 'fertilizer_org', label: 'Λιπάσματα Οργ.', icon: '🌿' },
   { key: 'legitimacy', label: 'Νομιμοποιητικά', icon: '📄' },
 ];
 
@@ -29,6 +38,8 @@ export default function Fields() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [legalFiles, setLegalFiles] = useState({});
+  const [certFiles, setCertFiles] = useState({});
+  const [gisFiles, setGisFiles] = useState({});
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -43,9 +54,9 @@ export default function Fields() {
         ...prev[`plot${plot}`],
         [section]: {
           ...prev[`plot${plot}`]?.[section],
-          [field]: value
-        }
-      }
+          [field]: value,
+        },
+      },
     }));
   };
 
@@ -58,10 +69,10 @@ export default function Fields() {
           ...prev[`plot${plot}`]?.[section],
           [year]: {
             ...prev[`plot${plot}`]?.[section]?.[year],
-            [field]: value
-          }
-        }
-      }
+            [field]: value,
+          },
+        },
+      },
     }));
   };
 
@@ -88,6 +99,27 @@ export default function Fields() {
     const entries = Array.isArray(curr) ? curr : [{}];
     return { ...prev, [`plot${plot}`]: { ...prev[`plot${plot}`], tillage: { ...prev[`plot${plot}`]?.tillage, [year]: entries.map((e, i) => i === idx ? { ...e, [field]: value } : e) } } };
   });
+
+  function SelectOther({ value, otherValue, onChange, onOtherChange, options }) {
+    return (
+      <>
+        <select value={value} onChange={e => onChange(e.target.value)}>
+          <option value="">Επιλέξτε...</option>
+          {options.map(o => <option key={o}>{o}</option>)}
+        </select>
+        {value === 'Άλλο' && (
+          <input
+            type="text"
+            required
+            placeholder="Παρακαλώ προσδιορίστε..."
+            style={{ marginTop: '8px' }}
+            value={otherValue || ''}
+            onChange={e => onOtherChange(e.target.value)}
+          />
+        )}
+      </>
+    );
+  }
 
   const submit = async () => {
     setLoading(true);
@@ -156,6 +188,8 @@ export default function Fields() {
         .divider { border: none; border-top: 1px solid #e0ead8; margin: 1.5rem 0; }
         .radio-row { display: flex; gap: 12px; }
         .radio-opt { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: #333; }
+        .member-box { background: #f0f7ec; border: 1px solid #c8e0b4; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+        .member-box-header { font-size: 13px; font-weight: 600; color: #1a3d2b; margin-bottom: 1rem; }
       `}</style>
 
       <div className="wrap">
@@ -196,19 +230,51 @@ export default function Fields() {
                   <input type="text" placeholder="π.χ. Ηλεία" value={val(activePlot,'info','region')} onChange={e => setField(activePlot,'info','region',e.target.value)} />
                 </div>
                 <div className="field">
-                  <label>Έκταση (ha)</label>
-                  <input type="number" placeholder="π.χ. 5" step="0.1" value={val(activePlot,'info','area')} onChange={e => setField(activePlot,'info','area',e.target.value)} />
+                  <label>Έκταση (στρέμματα)</label>
+                  <input type="number" placeholder="π.χ. 50" step="0.1" value={val(activePlot,'info','area')} onChange={e => setField(activePlot,'info','area',e.target.value)} />
                 </div>
               </div>
+
               <div className="field">
-                <label>Συντεταγμένες GIS</label>
-                <input type="text" placeholder="π.χ. 37N 21E" value={val(activePlot,'info','gis')} onChange={e => setField(activePlot,'info','gis',e.target.value)} />
+                <label>Συντεταγμένες / Αρχείο GIS</label>
+                <input
+                  type="text"
+                  placeholder="Συντεταγμένες ή σύνδεσμος (π.χ. Google Maps link)"
+                  value={val(activePlot,'info','gis_link')}
+                  onChange={e => setField(activePlot,'info','gis_link',e.target.value)}
+                />
+                <a href="https://maps.google.com" target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#4a8c2a', display: 'inline-block', marginTop: '4px' }}>
+                  Άνοιγμα Google Maps για εύρεση συντεταγμένων
+                </a>
+                <div style={{ marginTop: '8px' }}>
+                  <label style={{ marginBottom: '4px' }}>Αρχείο KML/Shapefile</label>
+                  <input
+                    type="file"
+                    accept=".kml,.shp,.zip"
+                    style={{ padding: '8px 0', border: 'none' }}
+                    onChange={e => setGisFiles(prev => ({ ...prev, [`plot${activePlot}`]: e.target.files[0] }))}
+                  />
+                </div>
               </div>
+
               <div className="row2">
                 <div className="field">
                   <label>Εδαφική ανάλυση (αρχείο/link)</label>
                   <input type="text" placeholder="π.χ. link ή όνομα αρχείου" value={val(activePlot,'info','soil_file')} onChange={e => setField(activePlot,'info','soil_file',e.target.value)} />
                 </div>
+                <div className="field">
+                  <label>Τύπος εδάφους</label>
+                  <select value={val(activePlot,'info','soil_type')} onChange={e => setField(activePlot,'info','soil_type',e.target.value)}>
+                    <option value="">Επιλέξτε...</option>
+                    {SOIL_TYPES.map(t => <option key={t}>{t}</option>)}
+                  </select>
+                  {val(activePlot,'info','soil_type') === 'Άλλο' && (
+                    <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={val(activePlot,'info','soil_type_other')} onChange={e => setField(activePlot,'info','soil_type_other',e.target.value)} />
+                  )}
+                </div>
+              </div>
+
+              <div className="row2">
                 <div className="field">
                   <label>Εφαρμογή εδαφικού ασβέστη</label>
                   <select value={val(activePlot,'info','lime')} onChange={e => setField(activePlot,'info','lime',e.target.value)}>
@@ -216,32 +282,46 @@ export default function Fields() {
                     <option>Ναι</option><option>Όχι</option>
                   </select>
                 </div>
+                <div className="field">
+                  <label>Φυτοκάλυψη χειμώνα (cover crops)</label>
+                  <select value={val(activePlot,'info','cover_crops')} onChange={e => setField(activePlot,'info','cover_crops',e.target.value)}>
+                    <option value="">Επιλέξτε...</option>
+                    <option>Ναι, τακτικά</option>
+                    <option>Ναι, περιστασιακά</option>
+                    <option>Όχι</option>
+                  </select>
+                </div>
               </div>
+
               {val(activePlot,'info','lime') === 'Ναι' && (
                 <div className="row2">
                   <div className="field">
                     <label>Τύπος ασβέστη *</label>
                     <select required value={val(activePlot,'info','lime_type')} onChange={e => setField(activePlot,'info','lime_type',e.target.value)}>
                       <option value="">Επιλέξτε...</option>
-                      <option>Ασβεστιτικός</option>
-                      <option>Δολομιτικός</option>
+                      {LIME_TYPES.map(t => <option key={t}>{t}</option>)}
                     </select>
+                    {val(activePlot,'info','lime_type') === 'Άλλο' && (
+                      <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={val(activePlot,'info','lime_type_other')} onChange={e => setField(activePlot,'info','lime_type_other',e.target.value)} />
+                    )}
                   </div>
                   <div className="field">
-                    <label>Ποσότητα (tn/ha) *</label>
-                    <input required type="number" placeholder="π.χ. 2.5" step="0.1" value={val(activePlot,'info','lime_qty')} onChange={e => setField(activePlot,'info','lime_qty',e.target.value)} />
+                    <label>Ποσότητα (tn/στρέμμα) *</label>
+                    <input required type="number" placeholder="π.χ. 0.25" step="0.01" value={val(activePlot,'info','lime_qty')} onChange={e => setField(activePlot,'info','lime_qty',e.target.value)} />
                   </div>
                 </div>
               )}
+
               <div className="row3">
                 <div className="field">
                   <label>Διαχείριση υπολειμμάτων</label>
                   <select value={val(activePlot,'info','residues')} onChange={e => setField(activePlot,'info','residues',e.target.value)}>
                     <option value="">Επιλέξτε...</option>
-                    <option>Παραμονή/Ενσωμάτωση</option>
-                    <option>Απομάκρυνση</option>
-                    <option>Καύση</option>
+                    {RESIDUES_OPTIONS.map(o => <option key={o}>{o}</option>)}
                   </select>
+                  {val(activePlot,'info','residues') === 'Άλλο' && (
+                    <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={val(activePlot,'info','residues_other')} onChange={e => setField(activePlot,'info','residues_other',e.target.value)} />
+                  )}
                 </div>
                 <div className="field">
                   <label>Αρδευόμενο</label>
@@ -258,29 +338,30 @@ export default function Fields() {
                   </select>
                 </div>
               </div>
+
               {val(activePlot,'info','residues') === 'Απομάκρυνση' && (
                 <div className="field">
                   <label>Ποσοστό (%) υπολειμμάτων που απομακρύνθηκε *</label>
                   <input required type="number" min="0" max="100" placeholder="π.χ. 80" value={val(activePlot,'info','residues_pct')} onChange={e => setField(activePlot,'info','residues_pct',e.target.value)} />
                 </div>
               )}
+
               {val(activePlot,'info','irrigated') === 'Ναι' && (
                 <>
                   <div className="row2">
                     <div className="field">
-                      <label>Ποσότητα νερού *</label>
-                      <input required type="number" placeholder="π.χ. 500" value={val(activePlot,'info','irr_qty')} onChange={e => setField(activePlot,'info','irr_qty',e.target.value)} />
+                      <label>Ποσότητα νερού (m³/στρέμμα) *</label>
+                      <input required type="number" placeholder="π.χ. 50" value={val(activePlot,'info','irr_qty')} onChange={e => setField(activePlot,'info','irr_qty',e.target.value)} />
                     </div>
                     <div className="field">
                       <label>Τύπος Άρδευσης *</label>
                       <select required value={val(activePlot,'info','irr_type')} onChange={e => setField(activePlot,'info','irr_type',e.target.value)}>
                         <option value="">Επιλέξτε...</option>
-                        <option>Στάγδην</option>
-                        <option>Μπεκ/Micro-sprinklers</option>
-                        <option>Καρούλια/Κανόνια</option>
-                        <option>Ράμπα οριζόντιου ποτίσματος</option>
-                        <option>Κατάκλυση/Επιφανειακή</option>
+                        {IRRIGATION_TYPES.map(o => <option key={o}>{o}</option>)}
                       </select>
+                      {val(activePlot,'info','irr_type') === 'Άλλο' && (
+                        <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={val(activePlot,'info','irr_type_other')} onChange={e => setField(activePlot,'info','irr_type_other',e.target.value)} />
+                      )}
                     </div>
                   </div>
                   <div className="row2">
@@ -288,21 +369,21 @@ export default function Fields() {
                       <label>Τύπος Αντλίας *</label>
                       <select required value={val(activePlot,'info','pump_type')} onChange={e => setField(activePlot,'info','pump_type',e.target.value)}>
                         <option value="">Επιλέξτε...</option>
-                        <option>Ηλεκτροκίνητη</option>
-                        <option>Πετρελαιοκίνητη (Diesel)</option>
-                        <option>Βενζινοκίνητη</option>
-                        <option>Φωτοβολταϊκό/ΑΠΕ</option>
-                        <option>Αρδευτικό δίκτυο ΤΟΕΒ</option>
+                        {PUMP_TYPES.map(o => <option key={o}>{o}</option>)}
                       </select>
+                      {val(activePlot,'info','pump_type') === 'Άλλο' && (
+                        <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={val(activePlot,'info','pump_type_other')} onChange={e => setField(activePlot,'info','pump_type_other',e.target.value)} />
+                      )}
                     </div>
                     <div className="field">
                       <label>Τύπος Καυσίμου *</label>
                       <select required value={val(activePlot,'info','fuel_type')} onChange={e => setField(activePlot,'info','fuel_type',e.target.value)}>
                         <option value="">Επιλέξτε...</option>
-                        <option>Diesel</option>
-                        <option>Βενζίνη</option>
-                        <option>Ρεύμα Δικτύου</option>
+                        {FUEL_TYPES.map(o => <option key={o}>{o}</option>)}
                       </select>
+                      {val(activePlot,'info','fuel_type') === 'Άλλο' && (
+                        <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={val(activePlot,'info','fuel_type_other')} onChange={e => setField(activePlot,'info','fuel_type_other',e.target.value)} />
+                      )}
                     </div>
                   </div>
                   <div className="field">
@@ -311,6 +392,7 @@ export default function Fields() {
                   </div>
                 </>
               )}
+
               <div className="row2">
                 <div className="field">
                   <label>Βόσκηση</label>
@@ -358,6 +440,9 @@ export default function Fields() {
                             <option value="">Επιλέξτε...</option>
                             {TILLAGE_TYPES.map(t => <option key={t}>{t}</option>)}
                           </select>
+                          {entry.type === 'Άλλο' && (
+                            <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={entry.type_other || ''} onChange={e => setTillageEntry(activePlot, year, idx, 'type_other', e.target.value)} />
+                          )}
                         </div>
                         <div className="field">
                           <label>Βάθος εφαρμογής (cm)</label>
@@ -390,6 +475,9 @@ export default function Fields() {
                         <option value="">Επιλέξτε...</option>
                         {CROP_LIST.map(c => <option key={c}>{c}</option>)}
                       </select>
+                      {yearVal(activePlot,'crops',year,'main') === 'Άλλο' && (
+                        <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={yearVal(activePlot,'crops',year,'main_other')} onChange={e => setYearField(activePlot,'crops',year,'main_other',e.target.value)} />
+                      )}
                     </div>
                     <div className="field">
                       <label>Δευτερεύουσα / Επίσπορη</label>
@@ -397,6 +485,9 @@ export default function Fields() {
                         <option value="">Επιλέξτε...</option>
                         {CROP_LIST.map(c => <option key={c}>{c}</option>)}
                       </select>
+                      {yearVal(activePlot,'crops',year,'cover') === 'Άλλο' && (
+                        <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={yearVal(activePlot,'crops',year,'cover_other')} onChange={e => setYearField(activePlot,'crops',year,'cover_other',e.target.value)} />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -428,8 +519,8 @@ export default function Fields() {
                       </select>
                     </div>
                     <div className="field">
-                      <label>Απόδοση (kg/ha)</label>
-                      <input type="number" placeholder="π.χ. 3000" value={yearVal(activePlot,'harvest_main',year,'yield')} onChange={e => setYearField(activePlot,'harvest_main',year,'yield',e.target.value)} />
+                      <label>Απόδοση (kg/στρέμμα)</label>
+                      <input type="number" placeholder="π.χ. 300" value={yearVal(activePlot,'harvest_main',year,'yield')} onChange={e => setYearField(activePlot,'harvest_main',year,'yield',e.target.value)} />
                     </div>
                   </div>
                 </div>
@@ -440,7 +531,7 @@ export default function Fields() {
           {/* ΣΥΓΚΟΜΙΔΗ ΕΠΙΣΠΟΡΗ */}
           {activeSection === 'harvest_cover' && (
             <>
-              <div className="section-title">📅 Επίσπορη Καλλιέργεια — Αγροτεμάχιο {activePlot}</div>
+              <div className="section-title">🌱 Επίσπορη Καλλιέργεια — Αγροτεμάχιο {activePlot}</div>
               <div className="section-sub">Στοιχεία επίσπορης καλλιέργειας ανά έτος.</div>
               {YEARS.map(year => (
                 <div className="year-block" key={year}>
@@ -474,22 +565,70 @@ export default function Fields() {
                         <label>Μέθοδος Τερματισμού</label>
                         <select value={yearVal(activePlot,'harvest_cover',year,'termination')} onChange={e => setYearField(activePlot,'harvest_cover',year,'termination',e.target.value)}>
                           <option value="">Επιλέξτε...</option>
-                          <option>Ενσωμάτωση στο έδαφος</option>
-                          <option>Χημική Καταστροφή</option>
-                          <option>Βόσκηση</option>
-                          <option>Συγκομιδή</option>
+                          {TERMINATION_OPTIONS.map(o => <option key={o}>{o}</option>)}
                         </select>
+                        {yearVal(activePlot,'harvest_cover',year,'termination') === 'Άλλο' && (
+                          <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={yearVal(activePlot,'harvest_cover',year,'termination_other')} onChange={e => setYearField(activePlot,'harvest_cover',year,'termination_other',e.target.value)} />
+                        )}
                       </div>
                       {yearVal(activePlot,'harvest_cover',year,'termination') === 'Συγκομιδή' && (
                         <div className="field">
-                          <label>Απόδοση (kg/ha) *</label>
-                          <input required type="number" placeholder="π.χ. 1500" value={yearVal(activePlot,'harvest_cover',year,'yield')} onChange={e => setYearField(activePlot,'harvest_cover',year,'yield',e.target.value)} />
+                          <label>Απόδοση (kg/στρέμμα) *</label>
+                          <input required type="number" placeholder="π.χ. 150" value={yearVal(activePlot,'harvest_cover',year,'yield')} onChange={e => setYearField(activePlot,'harvest_cover',year,'yield',e.target.value)} />
                         </div>
                       )}
                     </>
                   )}
                 </div>
               ))}
+            </>
+          )}
+
+          {/* ΠΙΣΤΟΠΟΙΗΣΗ */}
+          {activeSection === 'certification' && (
+            <>
+              <div className="section-title">📜 Πιστοποίηση καλλιέργειας — Αγροτεμάχιο {activePlot}</div>
+              <div className="section-sub">Στοιχεία πιστοποίησης για το αγροτεμάχιο.</div>
+
+              <div className="field">
+                <label>Διαθέτετε πιστοποίηση για την καλλιέργειά σας;</label>
+                <div className="radio-row" style={{ marginTop: '6px' }}>
+                  {['Ναι', 'Όχι'].map(opt => (
+                    <label key={opt} className="radio-opt">
+                      <input type="radio" name={`has_cert_${activePlot}`} value={opt} checked={val(activePlot,'certification','has_cert') === opt} onChange={() => setField(activePlot,'certification','has_cert',opt)} style={{ width: 'auto' }} />
+                      {opt}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {val(activePlot,'certification','has_cert') === 'Ναι' && (
+                <>
+                  <div className="field">
+                    <label>Τύπος πιστοποίησης</label>
+                    <select value={val(activePlot,'certification','cert_type')} onChange={e => setField(activePlot,'certification','cert_type',e.target.value)}>
+                      <option value="">Επιλέξτε...</option>
+                      {CERT_TYPES.map(t => <option key={t}>{t}</option>)}
+                    </select>
+                    {val(activePlot,'certification','cert_type') === 'Άλλο' && (
+                      <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={val(activePlot,'certification','cert_type_other')} onChange={e => setField(activePlot,'certification','cert_type_other',e.target.value)} />
+                    )}
+                  </div>
+                  <div className="field">
+                    <label>Αριθμός πιστοποίησης (προαιρετικά αν ανεβάσετε αρχείο)</label>
+                    <input type="text" placeholder="π.χ. GR-ORG-001" value={val(activePlot,'certification','cert_number')} onChange={e => setField(activePlot,'certification','cert_number',e.target.value)} />
+                  </div>
+                  <div className="field">
+                    <label>Αρχείο πιστοποίησης</label>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      style={{ padding: '8px 0', border: 'none' }}
+                      onChange={e => setCertFiles(prev => ({ ...prev, [`plot${activePlot}`]: e.target.files[0] }))}
+                    />
+                  </div>
+                </>
+              )}
             </>
           )}
 
@@ -510,8 +649,11 @@ export default function Fields() {
                       <label>Τύπος λιπάσματος</label>
                       <select value={yearVal(activePlot,'fertilizer_n',year,'type')} onChange={e => setYearField(activePlot,'fertilizer_n',year,'type',e.target.value)}>
                         <option value="">Επιλέξτε...</option>
-                        {FERTILIZER_TYPES.map(t => <option key={t}>{t}</option>)}
+                        {NITROGEN_TYPES.map(t => <option key={t}>{t}</option>)}
                       </select>
+                      {yearVal(activePlot,'fertilizer_n',year,'type') === 'Άλλο' && (
+                        <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={yearVal(activePlot,'fertilizer_n',year,'type_other')} onChange={e => setYearField(activePlot,'fertilizer_n',year,'type_other',e.target.value)} />
+                      )}
                     </div>
                     <div className="field">
                       <label>Μήνας εφαρμογής</label>
@@ -521,8 +663,8 @@ export default function Fields() {
                       </select>
                     </div>
                     <div className="field">
-                      <label>Ποσότητα (kg/ha)</label>
-                      <input type="number" placeholder="π.χ. 96" value={yearVal(activePlot,'fertilizer_n',year,'qty')} onChange={e => setYearField(activePlot,'fertilizer_n',year,'qty',e.target.value)} />
+                      <label>Ποσότητα (kg/στρέμμα)</label>
+                      <input type="number" placeholder="π.χ. 9.6" value={yearVal(activePlot,'fertilizer_n',year,'qty')} onChange={e => setYearField(activePlot,'fertilizer_n',year,'qty',e.target.value)} />
                     </div>
                   </div>
                 </div>
@@ -549,6 +691,9 @@ export default function Fields() {
                         <option value="">Επιλέξτε...</option>
                         {ORGANIC_TYPES.map(t => <option key={t}>{t}</option>)}
                       </select>
+                      {yearVal(activePlot,'fertilizer_org',year,'type') === 'Άλλο' && (
+                        <input type="text" required placeholder="Παρακαλώ προσδιορίστε..." style={{ marginTop: '8px' }} value={yearVal(activePlot,'fertilizer_org',year,'type_other')} onChange={e => setYearField(activePlot,'fertilizer_org',year,'type_other',e.target.value)} />
+                      )}
                     </div>
                     <div className="field">
                       <label>Μήνας εφαρμογής</label>
@@ -558,8 +703,8 @@ export default function Fields() {
                       </select>
                     </div>
                     <div className="field">
-                      <label>Ποσότητα (kg/ha)</label>
-                      <input type="number" placeholder="π.χ. 500" value={yearVal(activePlot,'fertilizer_org',year,'qty')} onChange={e => setYearField(activePlot,'fertilizer_org',year,'qty',e.target.value)} />
+                      <label>Ποσότητα (kg/στρέμμα)</label>
+                      <input type="number" placeholder="π.χ. 50" value={yearVal(activePlot,'fertilizer_org',year,'qty')} onChange={e => setYearField(activePlot,'fertilizer_org',year,'qty',e.target.value)} />
                     </div>
                   </div>
                   <div className="row2">
