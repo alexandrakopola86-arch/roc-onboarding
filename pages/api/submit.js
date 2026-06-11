@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     
 χconst name =
       body.fullName || (body.onboarding?.firstName ? body.onboarding.firstName + " " + (body.onboarding.lastName || "") : null) || // Αγρότης: πλήρες όνομα
-      body.cooperativeName || // Συνεταιρισμός: όνομα συνεταιρισμού
+    body.cooperativeName || body.onboarding?.orgName || // Συνεταιρισμός/Εταιρεία
       body.companyName ||     // Εταιρεία: όνομα εταιρείας
       "Άγνωστος";
 
