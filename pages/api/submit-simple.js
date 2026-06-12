@@ -192,10 +192,6 @@ function buildHtml(onb, eq, fields, fileNames) {
     <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:4px;">Ημερομηνία υποβολής: ${now}</div>
   </div>
 
-  <div style="padding:16px 20px;background:#f0f7ec;border-bottom:1px solid #c8e0b4;text-align:center;">
-    <a href="https://rootsofcarbon.gr/submissions" style="display:inline-block;background:#2D5016;color:white;text-decoration:none;padding:10px 22px;border-radius:6px;font-size:13px;font-weight:700;">📎 Προβολή PDF</a>
-  </div>
-
   <div style="padding:0;">
     ${s1}
     <div style="height:1px;background:#e0ead8;margin:0 16px;"></div>
