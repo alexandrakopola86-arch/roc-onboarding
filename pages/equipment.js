@@ -149,6 +149,18 @@ export default function Equipment() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeSection, setActiveSection] = useState(null);
+  const [equipAlloError, setEquipAlloError] = useState('');
+
+  const validateAllos = (eq) => {
+    const schema = EQUIPMENT_SCHEMAS[eq];
+    const machines = getMachines(eq);
+    for (const machine of machines) {
+      for (const f of schema.instanceFields) {
+        if (f.type === 'select' && machine[f.key] === 'Άλλο' && !machine[`${f.key}_other`]) return false;
+      }
+    }
+    return true;
+  };
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -264,7 +276,8 @@ export default function Equipment() {
         input, select { width: 100%; border: 1px solid #d0d8cc; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: 'Inter', sans-serif; color: #333; background: white; outline: none; transition: border-color 0.2s; }
         input:focus, select:focus { border-color: #4a8c2a; box-shadow: 0 0 0 3px rgba(74,140,42,0.1); }
         .field { margin-bottom: 1rem; }
-        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+        .err-inline { color: #c0392b; font-size: 12px; margin-top: 4px; }
         .row3 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
         .year-label { font-size: 11px; font-weight: 600; color: #1a3d2b; text-align: center; margin-bottom: 4px; }
         .year-section { margin-top: 1.5rem; }
@@ -419,12 +432,17 @@ export default function Equipment() {
                 ))}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem' }}>
+              {equipAlloError && (
+                <div style={{ color: '#c0392b', fontSize: '13px', marginTop: '1rem', padding: '8px 12px', background: '#fef0f0', border: '1px solid #fcd0d0', borderRadius: '6px' }}>
+                  {equipAlloError}
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem' }}>
                 {activeEquipment.indexOf(activeSection) > 0 && (
                   <button
                     className="btn-submit"
                     style={{ background: 'white', color: '#1a3d2b', border: '1px solid #d0d8cc' }}
-                    onClick={() => setActiveSection(activeEquipment[activeEquipment.indexOf(activeSection) - 1])}
+                    onClick={() => { setEquipAlloError(''); setActiveSection(activeEquipment[activeEquipment.indexOf(activeSection) - 1]); }}
                   >
                     ← Προηγούμενο
                   </button>
@@ -433,12 +451,20 @@ export default function Equipment() {
                   <button
                     className="btn-submit"
                     style={{ marginLeft: 'auto' }}
-                    onClick={() => setActiveSection(activeEquipment[activeEquipment.indexOf(activeSection) + 1])}
+                    onClick={() => {
+                      if (!validateAllos(activeSection)) { setEquipAlloError('Παρακαλούμε συμπληρώστε όλα τα υποχρεωτικά πεδία "Άλλο".'); return; }
+                      setEquipAlloError('');
+                      setActiveSection(activeEquipment[activeEquipment.indexOf(activeSection) + 1]);
+                    }}
                   >
                     Επόμενο →
                   </button>
                 ) : (
-                  <button className="btn-submit" style={{ marginLeft: 'auto' }} onClick={submit} disabled={loading}>
+                  <button className="btn-submit" style={{ marginLeft: 'auto' }} onClick={() => {
+                    if (!validateAllos(activeSection)) { setEquipAlloError('Παρακαλούμε συμπληρώστε όλα τα υποχρεωτικά πεδία "Άλλο".'); return; }
+                    setEquipAlloError('');
+                    submit();
+                  }} disabled={loading}>
                     {loading ? 'Υποβολή...' : 'Υποβολή φόρμας ✓'}
                   </button>
                 )}

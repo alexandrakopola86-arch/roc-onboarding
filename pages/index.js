@@ -387,6 +387,17 @@ export default function Home() {
     return true;
   };
 
+  const validateEquipAllos = (eq) => {
+    const machines = getEquipMachines(eq);
+    const schema = EQUIPMENT_SCHEMAS[eq];
+    for (const machine of machines) {
+      for (const f of schema.instanceFields) {
+        if (f.type === 'select' && machine[f.key] === 'Άλλο' && !machine[`${f.key}_other`]) return false;
+      }
+    }
+    return true;
+  };
+
   const validateFieldYears = (plot, sec, fields) => {
     const years = getFieldYears(plot, sec);
     for (const yr of years) {
@@ -408,6 +419,10 @@ export default function Home() {
   };
 
   const nextEquip = () => {
+    if (!validateEquipAllos(activeEquip)) {
+      setSectionErrors('Παρακαλούμε συμπληρώστε όλα τα πεδία "Άλλο" για τον εξοπλισμό.');
+      return;
+    }
     if (!validateEquipYears(activeEquip)) {
       setSectionErrors('Παρακαλούμε συμπληρώστε όλα τα πεδία για τα ορατά έτη.');
       return;
@@ -624,11 +639,13 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="phase-bar">
-          <div className={`phase-item ${phase === 'onboarding' ? 'active' : ['equipment','fields','done'].includes(phase) ? 'done' : ''}`}>1. Εγγραφή</div>
-          <div className={`phase-item ${phase === 'equipment' ? 'active' : ['fields','done'].includes(phase) ? 'done' : ''}`}>2. Εξοπλισμός</div>
-          <div className={`phase-item ${phase === 'fields' ? 'active' : phase === 'done' ? 'done' : ''}`}>3. Αγροτεμάχια</div>
-        </div>
+        {!['done', 'preview'].includes(phase) && (
+          <div className="phase-bar">
+            <div className={`phase-item ${phase === 'onboarding' ? 'active' : ['equipment','fields'].includes(phase) ? 'done' : ''}`}>1. Εγγραφή</div>
+            <div className={`phase-item ${phase === 'equipment' ? 'active' : phase === 'fields' ? 'done' : ''}`}>2. Εξοπλισμός</div>
+            <div className={`phase-item ${phase === 'fields' ? 'active' : ''}`}>3. Αγροτεμάχια</div>
+          </div>
+        )}
 
         {/* ====== ONBOARDING ====== */}
         {phase === 'onboarding' && (
@@ -1288,43 +1305,80 @@ export default function Home() {
               </div>
             )}
 
-            <div className="card" style={{marginBottom:'1rem'}}>
-              <div style={{fontWeight:'600',color:'#1a3d2b',fontSize:'14px',marginBottom:'1rem',paddingBottom:'10px',borderBottom:'1px solid #e0ead8'}}>📍 Αγροτεμάχια</div>
-              {Array.from({length:numPlots},(_,i)=>i+1).map(p => {
-                const info = fieldData[`p${p}`]?.info || {};
-                const cert = fieldData[`p${p}`]?.certification || {};
-                const files = [
-                  gisFiles[`p${p}`] ? `GIS: ${gisFiles[`p${p}`].name}` : null,
-                  soilFiles[`p${p}`] ? `Εδαφ.: ${soilFiles[`p${p}`].name}` : null,
-                  certFiles[`p${p}`] ? `Πιστ.: ${certFiles[`p${p}`].name}` : null,
-                  ...(legalFiles[`p${p}`] || []).map(f => `ΟΣΔΕ: ${f.name}`),
-                ].filter(Boolean);
-                return (
-                  <div key={p} style={{marginBottom:'12px',paddingBottom:'12px',borderBottom: p < numPlots ? '1px dashed #e0ead8' : 'none'}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
-                      <div style={{fontWeight:'600',fontSize:'13px',color:'#1a3d2b'}}>📍 Αγροτεμάχιο {p}</div>
-                      <button className="btn-edit" onClick={() => { setFromPreview(true); setPhase('fields'); setActivePlot(p); setActiveFieldSection('info'); }}>✏️ Επεξεργασία</button>
-                    </div>
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 12px',fontSize:'12px'}}>
-                      {[
-                        ['Περιοχή', info.region],
-                        ['Έκταση', info.area ? `${info.area} στρ.` : null],
-                        ['Αρδευόμενο', info.irrigated],
-                        ['Εδαφ. ανάλυση', info.soil_analysis],
-                        cert.has_cert === 'Ναι' ? ['Πιστοποίηση', cert.cert_type] : null,
-                        cert.has_cert === 'Ναι' && cert.cert_number ? ['Αρ. πιστ.', cert.cert_number] : null,
-                      ].filter(r => r && r[1]).map(([k, v]) => (
-                        <div key={k} style={{display:'flex',gap:'4px'}}>
-                          <span style={{color:'#999',width:'110px',flexShrink:0}}>{k}</span>
-                          <span style={{color:'#333',fontWeight:'500'}}>{v}</span>
-                        </div>
+            {Array.from({length:numPlots},(_,i)=>i+1).map(p => {
+              const pData = fieldData[`p${p}`] || {};
+              const info = pData.info || {};
+              const cert = pData.certification || {};
+              const fnVals = (sec, yr, keys) => keys.map(k => fyv(p,sec,yr,k)).filter(Boolean).join(' · ');
+              const files = [
+                gisFiles[`p${p}`] ? `GIS: ${gisFiles[`p${p}`].name}` : null,
+                soilFiles[`p${p}`] ? `Εδαφ.: ${soilFiles[`p${p}`].name}` : null,
+                certFiles[`p${p}`] ? `Πιστ.: ${certFiles[`p${p}`].name}` : null,
+                ...(legalFiles[`p${p}`] || []).map(f => `ΟΣΔΕ: ${f.name}`),
+              ].filter(Boolean);
+              return (
+                <div key={p} className="card" style={{marginBottom:'1rem'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',paddingBottom:'10px',borderBottom:'1px solid #e0ead8'}}>
+                    <div style={{fontWeight:'700',fontSize:'14px',color:'#1a3d2b'}}>📍 Αγροτεμάχιο {p}</div>
+                    <button className="btn-edit" onClick={() => { setFromPreview(true); setPhase('fields'); setActivePlot(p); setActiveFieldSection('info'); }}>✏️ Επεξεργασία</button>
+                  </div>
+
+                  {/* Βασικά στοιχεία */}
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 12px',fontSize:'12px',marginBottom:'10px'}}>
+                    {[['Περιοχή',info.region],['Έκταση',info.area?`${info.area} στρ.`:null],['Αρδευόμενο',info.irrigated],['Τύπος εδάφους',info.soil_type],['Cover crops',info.cover_crops],['Βόσκηση',info.grazing]].filter(r=>r&&r[1]).map(([k,v])=>(
+                      <div key={k} style={{display:'flex',gap:'4px'}}><span style={{color:'#999',width:'110px',flexShrink:0}}>{k}</span><span style={{color:'#333',fontWeight:'500'}}>{v}</span></div>
+                    ))}
+                  </div>
+                  {files.length > 0 && <div style={{fontSize:'11px',color:'#4a8c2a',marginBottom:'10px'}}>{files.join(' · ')}</div>}
+
+                  {/* Καλλιέργειες & Κατεργασία */}
+                  {getFieldYears(p,'crops').some(yr => fyv(p,'crops',yr,'main')) && (
+                    <div style={{marginBottom:'8px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'600',color:'#555',marginBottom:'4px'}}>🌾 Καλλιέργειες</div>
+                      {getFieldYears(p,'crops').filter(yr=>fyv(p,'crops',yr,'main')).map(yr=>(
+                        <div key={yr} style={{fontSize:'11px',color:'#444',padding:'1px 0'}}><span style={{fontWeight:'600',color:'#1a3d2b',marginRight:'6px'}}>{yr}</span>{fyv(p,'crops',yr,'main')}{fyv(p,'crops',yr,'cover') && ` · ${fyv(p,'crops',yr,'cover')}`}</div>
                       ))}
                     </div>
-                    {files.length > 0 && <div style={{fontSize:'11px',color:'#4a8c2a',marginTop:'4px'}}>{files.join(' · ')}</div>}
-                  </div>
-                );
-              })}
-            </div>
+                  )}
+                  {getFieldYears(p,'harvest_main').some(yr=>fyv(p,'harvest_main',yr,'yield')) && (
+                    <div style={{marginBottom:'8px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'600',color:'#555',marginBottom:'4px'}}>📅 Συγκομιδή</div>
+                      {getFieldYears(p,'harvest_main').filter(yr=>fyv(p,'harvest_main',yr,'yield')).map(yr=>(
+                        <div key={yr} style={{fontSize:'11px',color:'#444',padding:'1px 0'}}><span style={{fontWeight:'600',color:'#1a3d2b',marginRight:'6px'}}>{yr}</span>{fnVals('harvest_main',yr,['sow','harvest'])} · {fyv(p,'harvest_main',yr,'yield')} kg/στρ.</div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Λιπάσματα */}
+                  {pData.fertilizer_n?.applied === 'Ναι' && getFieldYears(p,'fertilizer_n').some(yr=>fyv(p,'fertilizer_n',yr,'type')) && (
+                    <div style={{marginBottom:'8px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'600',color:'#555',marginBottom:'4px'}}>🧪 Αζωτούχα Λιπάσματα</div>
+                      {getFieldYears(p,'fertilizer_n').filter(yr=>fyv(p,'fertilizer_n',yr,'type')).map(yr=>(
+                        <div key={yr} style={{fontSize:'11px',color:'#444',padding:'1px 0'}}><span style={{fontWeight:'600',color:'#1a3d2b',marginRight:'6px'}}>{yr}</span>{fyv(p,'fertilizer_n',yr,'type')} {fyv(p,'fertilizer_n',yr,'qty') && `· ${fyv(p,'fertilizer_n',yr,'qty')} kg/στρ.`}</div>
+                      ))}
+                    </div>
+                  )}
+                  {pData.fertilizer_org?.applied === 'Ναι' && getFieldYears(p,'fertilizer_org').some(yr=>fyv(p,'fertilizer_org',yr,'type')) && (
+                    <div style={{marginBottom:'8px'}}>
+                      <div style={{fontSize:'11px',fontWeight:'600',color:'#555',marginBottom:'4px'}}>🌿 Οργανικά Λιπάσματα</div>
+                      {getFieldYears(p,'fertilizer_org').filter(yr=>fyv(p,'fertilizer_org',yr,'type')).map(yr=>(
+                        <div key={yr} style={{fontSize:'11px',color:'#444',padding:'1px 0'}}><span style={{fontWeight:'600',color:'#1a3d2b',marginRight:'6px'}}>{yr}</span>{fyv(p,'fertilizer_org',yr,'type')} {fyv(p,'fertilizer_org',yr,'qty') && `· ${fyv(p,'fertilizer_org',yr,'qty')} kg/στρ.`}</div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Πιστοποίηση & Νομιμοποιητικά */}
+                  {cert.has_cert === 'Ναι' && (
+                    <div style={{fontSize:'11px',color:'#444',marginBottom:'6px'}}>
+                      📜 Πιστοποίηση: {cert.cert_type || '—'}{cert.cert_number && ` · Αρ. ${cert.cert_number}`}
+                    </div>
+                  )}
+                  {fv(p,'legitimacy','carbon_declaration') === 'true' && (
+                    <div style={{fontSize:'11px',color:'#4a8c2a'}}>✓ Δήλωση Carbon Credits</div>
+                  )}
+                </div>
+              );
+            })}
 
             <div className="nav" style={{justifyContent:'flex-end',marginBottom:'2rem'}}>
               <button className="btn-next" onClick={submitAll} disabled={loading}>

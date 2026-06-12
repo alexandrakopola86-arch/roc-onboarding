@@ -114,6 +114,7 @@ export default function Fields() {
   const [gisFiles, setGisFiles] = useState({});
   const [soilFiles, setSoilFiles] = useState({});
   const [legalErrors, setLegalErrors] = useState({});
+  const [alloError, setAlloError] = useState('');
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -174,6 +175,16 @@ export default function Fields() {
     return { ...prev, [`plot${plot}`]: { ...prev[`plot${plot}`], tillage: { ...prev[`plot${plot}`]?.tillage, [year]: entries.map((e, i) => i === idx ? { ...e, [field]: value } : e) } } };
   });
 
+  const setTillageCount = (plot, year, n) => {
+    const count = Math.max(0, parseInt(n) || 0);
+    setFormData(prev => {
+      const curr = prev[`plot${plot}`]?.tillage?.[year];
+      const entries = Array.isArray(curr) ? curr : [];
+      const newEntries = Array.from({ length: count }, (_, i) => entries[i] || {});
+      return { ...prev, [`plot${plot}`]: { ...prev[`plot${plot}`], tillage: { ...prev[`plot${plot}`]?.tillage, [year]: newEntries } } };
+    });
+  };
+
   function SelectOther({ value, otherValue, onChange, onOtherChange, options }) {
     return (
       <>
@@ -206,6 +217,59 @@ export default function Fields() {
       setSubmitted(true);
     } catch (e) { console.error(e); }
     setLoading(false);
+  };
+
+  const checkAlloFilled = (plot, section) => {
+    const sec = formData[`plot${plot}`]?.[section] || {};
+    const simpleSelects = {
+      info: ['soil_type', 'lime_type', 'irr_type', 'pump_type', 'residues'],
+      certification: ['cert_type'],
+    };
+    if (simpleSelects[section]) {
+      for (const f of simpleSelects[section]) {
+        if (sec[f] === 'Άλλο' && !sec[`${f}_other`]) return false;
+      }
+    }
+    const yearSelects = {
+      crops: ['main', 'cover'],
+      harvest_cover: ['termination'],
+      fertilizer_n: ['type'],
+      fertilizer_org: ['type'],
+    };
+    if (yearSelects[section]) {
+      for (const year of YEARS) {
+        const yd = sec[year] || {};
+        for (const f of yearSelects[section]) {
+          if (yd[f] === 'Άλλο' && !yd[`${f}_other`]) return false;
+        }
+      }
+    }
+    if (section === 'tillage') {
+      for (const year of YEARS) {
+        const entries = Array.isArray(sec[year]) ? sec[year] : [];
+        for (const entry of entries) {
+          if (entry.type === 'Άλλο' && !entry.type_other) return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  const handleAdvance = () => {
+    if (!checkAlloFilled(activePlot, activeSection)) {
+      setAlloError('Παρακαλούμε συμπληρώστε όλα τα υποχρεωτικά πεδία "Άλλο".');
+      return;
+    }
+    setAlloError('');
+    const idx = SECTIONS.findIndex(s => s.key === activeSection);
+    if (idx < SECTIONS.length - 1) {
+      setActiveSection(SECTIONS[idx + 1].key);
+    } else if (activePlot < numPlots) {
+      setActivePlot(activePlot + 1);
+      setActiveSection('info');
+    } else {
+      validateAndSubmit();
+    }
   };
 
   const validateAndSubmit = () => {
@@ -268,8 +332,8 @@ export default function Fields() {
         input, select, textarea { width: 100%; border: 1px solid #d0d8cc; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: 'Inter', sans-serif; color: #333; background: white; outline: none; transition: border-color 0.2s; }
         input:focus, select:focus, textarea:focus { border-color: #4a8c2a; box-shadow: 0 0 0 3px rgba(74,140,42,0.1); }
         .field { margin-bottom: 1rem; }
-        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+        .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: start; }
         .year-block { border: 1px solid #e0ead8; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
         .year-header { font-size: 12px; font-weight: 600; color: #1a3d2b; background: #f0f7ec; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
         .nav-row { display: flex; justify-content: space-between; margin-top: 2rem; gap: 12px; }
@@ -517,20 +581,23 @@ export default function Fields() {
           {activeSection === 'tillage' && (
             <>
               <div className="section-title">🔨 Κατεργασία εδάφους — Αγροτεμάχιο {activePlot}</div>
-              <div className="section-sub">Εργασίες κατεργασίας εδάφους ανά έτος. Μπορείτε να προσθέσετε πολλαπλές εργασίες ανά έτος.</div>
+              <div className="section-sub">Καταχωρίστε τον αριθμό εργασιών κατεργασίας για κάθε έτος.</div>
               {YEARS.map(year => (
                 <div className="year-block" key={year}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <div className="year-header" style={{ marginBottom: 0 }}>{year}</div>
-                    <button type="button" style={{ fontSize: '12px', padding: '4px 10px', border: '1px solid #4a8c2a', borderRadius: '6px', background: 'white', color: '#1a3d2b', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} onClick={() => addTillageEntry(activePlot, year)}>
-                      + Προσθήκη Εργασίας
-                    </button>
+                  <div className="year-header">{year}</div>
+                  <div className="field" style={{ maxWidth: '240px' }}>
+                    <label>Πόσες εργασίες κατεργασίας έγιναν το {year};</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="π.χ. 2"
+                      value={tillageEntries(activePlot, year).length || ''}
+                      onChange={e => setTillageCount(activePlot, year, e.target.value)}
+                    />
                   </div>
                   {tillageEntries(activePlot, year).map((entry, idx) => (
-                    <div key={idx} style={{ background: idx > 0 ? '#fafbfa' : 'transparent', border: idx > 0 ? '1px solid #e8f0e4' : 'none', borderRadius: '6px', padding: idx > 0 ? '10px 10px 4px' : '0', marginBottom: '8px', position: 'relative' }}>
-                      {idx > 0 && (
-                        <button type="button" style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '11px', padding: '2px 8px', border: '1px solid #e0a0a0', borderRadius: '4px', background: 'white', color: '#c0392b', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }} onClick={() => removeTillageEntry(activePlot, year, idx)}>✕</button>
-                      )}
+                    <div key={idx} style={{ background: '#fafbfa', border: '1px solid #e8f0e4', borderRadius: '6px', padding: '12px 12px 6px', marginBottom: '8px', marginTop: idx === 0 ? '8px' : '0' }}>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: '#1a3d2b', marginBottom: '10px' }}>Εργασία {idx + 1}</div>
                       <div className="row2">
                         <div className="field">
                           <label>Τύπος κατεργασίας</label>
@@ -875,25 +942,25 @@ export default function Fields() {
             </>
           )}
 
+          {alloError && (
+            <div style={{ color: '#c0392b', fontSize: '13px', marginBottom: '1rem', padding: '8px 12px', background: '#fef0f0', border: '1px solid #fcd0d0', borderRadius: '6px' }}>
+              {alloError}
+            </div>
+          )}
           <div className="nav-row">
             {SECTIONS.findIndex(s => s.key === activeSection) > 0 && (
-              <button className="btn btn-sec" onClick={() => setActiveSection(SECTIONS[SECTIONS.findIndex(s => s.key === activeSection) - 1].key)}>
+              <button className="btn btn-sec" onClick={() => { setAlloError(''); setActiveSection(SECTIONS[SECTIONS.findIndex(s => s.key === activeSection) - 1].key); }}>
                 ← Προηγούμενο
               </button>
             )}
-            {SECTIONS.findIndex(s => s.key === activeSection) < SECTIONS.length - 1 ? (
-              <button className="btn btn-pri" onClick={() => setActiveSection(SECTIONS[SECTIONS.findIndex(s => s.key === activeSection) + 1].key)}>
-                Επόμενο →
-              </button>
-            ) : activePlot < numPlots ? (
-              <button className="btn btn-pri" onClick={() => { setActivePlot(activePlot + 1); setActiveSection('info'); }}>
-                Αγροτεμάχιο {activePlot + 1} →
-              </button>
-            ) : (
-              <button className="btn btn-pri" onClick={validateAndSubmit} disabled={loading}>
-                {loading ? 'Υποβολή...' : 'Υποβολή φόρμας ✓'}
-              </button>
-            )}
+            <button className="btn btn-pri" onClick={handleAdvance} disabled={loading}>
+              {(() => {
+                const idx = SECTIONS.findIndex(s => s.key === activeSection);
+                if (idx < SECTIONS.length - 1) return 'Επόμενο →';
+                if (activePlot < numPlots) return `Αγροτεμάχιο ${activePlot + 1} →`;
+                return loading ? 'Υποβολή...' : 'Υποβολή φόρμας ✓';
+              })()}
+            </button>
           </div>
         </div>
       </div>
