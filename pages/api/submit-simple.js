@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer';
 
+export const config = { api: { bodyParser: { sizeLimit: '20mb' } } };
+
 const ALL_YEARS = [2021, 2022, 2023, 2024, 2025];
 const GREEN = '#1a3d2b';
 const LIGHT = '#e8f4e0';
@@ -217,6 +219,7 @@ export default async function handler(req, res) {
     const eq = body.equipment || {};
     const fields = body.fields || {};
     const fileNames = body.fileNames || {};
+    const attachments = body.attachments || [];
     const name = onb.firstName
       ? `${onb.firstName} ${onb.lastName || ''}`.trim()
       : onb.orgName || 'Αγνωστος';
@@ -277,6 +280,11 @@ EMAIL: ${onb.email || '-'}
         to: 'info@rootsofcarbon.gr',
         subject: `Νέα Εγγραφή: ${name} — ${new Date().toLocaleDateString('el-GR')}`,
         html: buildHtml(onb, eq, fields, fileNames),
+        attachments: attachments.map(a => ({
+          filename: a.name,
+          content: Buffer.from(a.data, 'base64'),
+          contentType: a.type || 'application/octet-stream',
+        })),
       });
     }
 

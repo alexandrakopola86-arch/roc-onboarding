@@ -506,9 +506,25 @@ export default function Home() {
     }
   };
 
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve({ name: file.name, type: file.type, data: reader.result.split(',')[1] });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
   const submitAll = async () => {
     setLoading(true);
     try {
+      const fileTasks = [];
+      Object.values(gisFiles).forEach(f => { if (f) fileTasks.push(fileToBase64(f)); });
+      Object.values(soilFiles).forEach(f => { if (f) fileTasks.push(fileToBase64(f)); });
+      Object.values(certFiles).forEach(f => { if (f) fileTasks.push(fileToBase64(f)); });
+      Object.values(legalFiles).forEach(files => { (files || []).forEach(f => fileTasks.push(fileToBase64(f))); });
+      if (agronomistFile) fileTasks.push(fileToBase64(agronomistFile));
+      if (carbonFile) fileTasks.push(fileToBase64(carbonFile));
+      const attachments = await Promise.all(fileTasks);
+
       const fileNames = {
         gis: Object.fromEntries(Object.entries(gisFiles).map(([k, f]) => [k, f?.name || null])),
         soil: Object.fromEntries(Object.entries(soilFiles).map(([k, f]) => [k, f?.name || null])),
@@ -517,7 +533,7 @@ export default function Home() {
         agronomist: agronomistFile?.name || null,
         carbon: carbonFile?.name || null,
       };
-      await fetch('/api/submit-simple', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboarding: onb, equipment: equipData, fields: fieldData, fileNames }) });
+      await fetch('/api/submit-simple', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboarding: onb, equipment: equipData, fields: fieldData, fileNames, attachments }) });
       setSubmittedAt(new Date());
       setPhase('done');
       localStorage.removeItem('roc_progress');
