@@ -260,6 +260,12 @@ export default function Fields() {
       setAlloError('Παρακαλούμε συμπληρώστε όλα τα υποχρεωτικά πεδία "Άλλο".');
       return;
     }
+    if (activeSection === 'certification' && val(activePlot, 'certification', 'has_cert') === 'Ναι') {
+      if (!val(activePlot, 'certification', 'cert_number') && !certFiles[`plot${activePlot}`]) {
+        setAlloError('Παρακαλώ συμπληρώστε τον αριθμό πιστοποίησης ή ανεβάστε το αρχείο πιστοποίησης.');
+        return;
+      }
+    }
     setAlloError('');
     const idx = SECTIONS.findIndex(s => s.key === activeSection);
     if (idx < SECTIONS.length - 1) {
@@ -330,10 +336,12 @@ export default function Fields() {
         .section-sub { font-size: 13px; color: #888; margin-bottom: 1.5rem; }
         label { display: block; font-size: 13px; font-weight: 500; color: #333; margin-bottom: 5px; }
         input, select, textarea { width: 100%; border: 1px solid #d0d8cc; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: 'Inter', sans-serif; color: #333; background: white; outline: none; transition: border-color 0.2s; }
+        input:not([type=file]):not([type=checkbox]):not([type=radio]), select { height: 38px; padding: 0 12px; }
+        textarea { padding: 10px 12px; }
         input:focus, select:focus, textarea:focus { border-color: #4a8c2a; box-shadow: 0 0 0 3px rgba(74,140,42,0.1); }
         .field { margin-bottom: 1rem; }
-        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
-        .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: start; }
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: flex-end; }
+        .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: flex-end; }
         .year-block { border: 1px solid #e0ead8; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
         .year-header { font-size: 12px; font-weight: 600; color: #1a3d2b; background: #f0f7ec; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
         .nav-row { display: flex; justify-content: space-between; margin-top: 2rem; gap: 12px; }
@@ -586,14 +594,21 @@ export default function Fields() {
                 <div className="year-block" key={year}>
                   <div className="year-header">{year}</div>
                   <div className="field" style={{ maxWidth: '240px' }}>
-                    <label>Πόσες εργασίες κατεργασίας έγιναν το {year};</label>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="π.χ. 2"
-                      value={tillageEntries(activePlot, year).length || ''}
-                      onChange={e => setTillageCount(activePlot, year, e.target.value)}
-                    />
+                    <label>Πόσες φορές κάνατε κατεργασία;</label>
+                    <select
+                      value={tillageEntries(activePlot, year).length}
+                      onChange={e => {
+                        const newN = parseInt(e.target.value) || 0;
+                        const oldN = tillageEntries(activePlot, year).length;
+                        if (newN < oldN) {
+                          const hasData = tillageEntries(activePlot, year).slice(newN).some(en => en.type || en.month || en.depth);
+                          if (hasData && !window.confirm(`Θα διαγραφούν ${oldN - newN} εγγραφές κατεργασίας. Συνέχεια;`)) return;
+                        }
+                        setTillageCount(activePlot, year, newN);
+                      }}
+                    >
+                      {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n === 0 ? '—' : n}</option>)}
+                    </select>
                   </div>
                   {tillageEntries(activePlot, year).map((entry, idx) => (
                     <div key={idx} style={{ background: '#fafbfa', border: '1px solid #e8f0e4', borderRadius: '6px', padding: '12px 12px 6px', marginBottom: '8px', marginTop: idx === 0 ? '8px' : '0' }}>
@@ -812,7 +827,7 @@ export default function Fields() {
               <div className="section-title">🧪 Αζωτούχα Λιπάσματα — Αγροτεμάχιο {activePlot}</div>
               <div className="section-sub">Τύπος, μήνας εφαρμογής και ποσότητα ανά έτος.</div>
               <div className="field" style={{ marginBottom: '1.5rem' }}>
-                <label>Εφαρμόσατε αζωτούχα λιπάσματα;</label>
+                <label>Χρησιμοποιήσατε λιπάσματα με άζωτο;</label>
                 <div className="radio-row" style={{ marginTop: '6px' }}>
                   {['Ναι', 'Όχι'].map(opt => (
                     <label key={opt} className="radio-opt">
@@ -859,7 +874,7 @@ export default function Fields() {
               <div className="section-title">🌿 Οργανικά Λιπάσματα — Αγροτεμάχιο {activePlot}</div>
               <div className="section-sub">Τύπος, μήνας εφαρμογής και ποσότητα ανά έτος.</div>
               <div className="field" style={{ marginBottom: '1.5rem' }}>
-                <label>Εφαρμόσατε οργανικά λιπάσματα;</label>
+                <label>Χρησιμοποιήσατε οργανικά λιπάσματα;</label>
                 <div className="radio-row" style={{ marginTop: '6px' }}>
                   {['Ναι', 'Όχι'].map(opt => (
                     <label key={opt} className="radio-opt">

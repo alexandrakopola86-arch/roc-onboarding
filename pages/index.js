@@ -162,7 +162,7 @@ export default function Home() {
   const [onb, setOnb] = useState({
     type: '', firstName: '', lastName: '', email: '', phone: '', orgName: '',
     region: '', hectares: '', plots: '', crops: [], equipment: [],
-    agronomist: '', agronomistNumber: '', source: '', source_other: '', comments: '', farm_size: '', farm_size_other: '', carbon_measured: '', carbonValue: '', motivation: '', motivation_other: '', crops_other: '',
+    agronomist: '', agronomistNumber: '', source: '', source_other: '', comments: '', farm_size: '', farm_size_other: '', carbon_measured: '', carbonValue: '', motivation: '', motivation_other: '', crops_other: '', equipment_other: '',
     memberFirstName: '', memberLastName: '', memberEmail: '', memberPhone: '', memberRole: '',
     ownerFirstName: '', ownerLastName: '', ownerEmail: '', ownerPhone: '',
     companyRepName: '',
@@ -434,7 +434,26 @@ export default function Home() {
     else setPhase('fields');
   };
 
-  const FIELD_YEAR_SECTIONS = ['tillage', 'crops', 'harvest_main', 'harvest_cover', 'fertilizer_n', 'fertilizer_org'];
+  const FIELD_YEAR_SECTIONS = ['crops', 'harvest_main', 'harvest_cover'];
+
+  const getIdxTillageEntries = (plot, year) => {
+    const e = fieldData[`p${plot}`]?.tillage?.[year];
+    return Array.isArray(e) ? e : [];
+  };
+  const setIdxTillageCount = (plot, year, n) => {
+    const count = Math.max(0, Math.min(5, parseInt(n) || 0));
+    setFieldData(p => {
+      const curr = p[`p${plot}`]?.tillage?.[year];
+      const entries = Array.isArray(curr) ? curr : [];
+      const newEntries = Array.from({ length: count }, (_, i) => entries[i] || {});
+      return { ...p, [`p${plot}`]: { ...p[`p${plot}`], tillage: { ...p[`p${plot}`]?.tillage, [year]: newEntries } } };
+    });
+  };
+  const setIdxTillageField = (plot, year, idx, field, value) => setFieldData(p => {
+    const curr = p[`p${plot}`]?.tillage?.[year];
+    const entries = Array.isArray(curr) ? curr : [];
+    return { ...p, [`p${plot}`]: { ...p[`p${plot}`], tillage: { ...p[`p${plot}`]?.tillage, [year]: entries.map((e, i) => i === idx ? { ...e, [field]: value } : e) } } };
+  });
 
   const getFieldSectionFields = (sec) => {
     if (sec === 'tillage') return [{ key: 'type', label: 'Τύπος κατεργασίας', type: 'select', options: TILLAGE_TYPES }, { key: 'month', label: 'Μήνας εφαρμογής', type: 'select', options: MONTHS }, { key: 'depth', label: 'Βάθος εφαρμογής (cm)', type: 'number', placeholder: 'π.χ. 25' }];
@@ -451,6 +470,12 @@ export default function Home() {
       const fields = getFieldSectionFields(activeFieldSection);
       if (!validateFieldYears(activePlot, activeFieldSection, fields)) {
         setSectionErrors('Παρακαλούμε συμπληρώστε όλα τα πεδία για τα ορατά έτη.');
+        return;
+      }
+    }
+    if (activeFieldSection === 'certification' && fv(activePlot, 'certification', 'has_cert') === 'Ναι') {
+      if (!fv(activePlot, 'certification', 'cert_number') && !certFiles[`p${activePlot}`]) {
+        setSectionErrors('Παρακαλώ συμπληρώστε τον αριθμό πιστοποίησης ή ανεβάστε το αρχείο πιστοποίησης.');
         return;
       }
     }
@@ -554,12 +579,14 @@ export default function Home() {
         .step-sub{font-size:13px;color:#888;margin-bottom:1.5rem}
         label{display:block;font-size:13px;font-weight:500;color:#333;margin-bottom:5px}
         input,select,textarea{width:100%;border:1px solid #d0d8cc;border-radius:8px;padding:10px 12px;font-size:14px;font-family:'Inter',sans-serif;color:#333;background:white;outline:none;transition:border-color 0.2s}
+        input:not([type=file]):not([type=checkbox]):not([type=radio]),select{height:38px;padding:0 12px}
+        textarea{padding:10px 12px}
         input:focus,select:focus,textarea:focus{border-color:#4a8c2a;box-shadow:0 0 0 3px rgba(74,140,42,0.1)}
         input.err,select.err{border-color:#e24b4a}
         .err-msg{font-size:12px;color:#e24b4a;margin-top:6px}
         .field{margin-bottom:1rem}
-        .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
-        .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:start}
+        .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:flex-end}
+        .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:flex-end}
         .type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
         .type-card{border:1px solid #d0d8cc;border-radius:10px;padding:16px 12px;cursor:pointer;text-align:center;transition:all 0.15s;background:white}
         .type-card:hover{border-color:#4a8c2a;background:#f0f7ec}
@@ -801,6 +828,12 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
+                {onb.equipment.includes('Άλλος εξοπλισμός') && (
+                  <div className="field" style={{marginTop:'10px'}}>
+                    <label>Παρακαλώ προσδιορίστε τον εξοπλισμό</label>
+                    <input value={onb.equipment_other || ''} onChange={e => setOnbField('equipment_other', e.target.value)} placeholder="π.χ. Μπαλιαστικό..." />
+                  </div>
+                )}
               </>)}
 
               {onbStep === 6 && (<>
@@ -1139,6 +1172,121 @@ export default function Home() {
                 <div className="field"><label>Σχόλια</label><textarea rows={3} placeholder="Προαιρετικά σχόλια..." value={fv(activePlot,'info','notes')} onChange={e => setFld(activePlot,'info','notes',e.target.value)} /></div>
               </>)}
 
+              {/* TILLAGE */}
+              {activeFieldSection === 'tillage' && (() => {
+                const years = getFieldYears(activePlot, 'tillage');
+                return (<>
+                  <div className="step-title">🔨 Κατεργασία — Αγροτεμάχιο {activePlot}</div>
+                  <div className="step-sub">Καταχωρίστε τον αριθμό κατεργασιών για κάθε έτος.</div>
+                  {years.map(yr => (
+                    <div key={yr} style={{border:'1px solid #e0ead8',borderRadius:'8px',padding:'1rem',marginBottom:'10px',position:'relative'}}>
+                      <span style={{display:'inline-block',background:'#1a3d2b',color:'white',fontSize:'11px',fontWeight:'600',padding:'2px 8px',borderRadius:'4px',marginBottom:'10px'}}>{yr}</span>
+                      <div className="field" style={{maxWidth:'200px'}}>
+                        <label>Πόσες φορές κάνατε κατεργασία;</label>
+                        <select
+                          value={getIdxTillageEntries(activePlot, yr).length}
+                          onChange={e => {
+                            const newN = parseInt(e.target.value) || 0;
+                            const oldN = getIdxTillageEntries(activePlot, yr).length;
+                            if (newN < oldN) {
+                              const hasData = getIdxTillageEntries(activePlot, yr).slice(newN).some(en => en.type || en.month || en.depth);
+                              if (hasData && !window.confirm(`Θα διαγραφούν ${oldN - newN} εγγραφές κατεργασίας. Συνέχεια;`)) return;
+                            }
+                            setIdxTillageCount(activePlot, yr, newN);
+                          }}
+                        >
+                          {[0,1,2,3,4,5].map(n => <option key={n} value={n}>{n === 0 ? '—' : n}</option>)}
+                        </select>
+                      </div>
+                      {getIdxTillageEntries(activePlot, yr).map((entry, idx) => (
+                        <div key={idx} style={{background:'#fafbfa',border:'1px solid #e8f0e4',borderRadius:'6px',padding:'12px 12px 6px',marginBottom:'8px'}}>
+                          <div style={{fontSize:'12px',fontWeight:'600',color:'#1a3d2b',marginBottom:'10px'}}>Εργασία {idx + 1}</div>
+                          <div className="row2">
+                            <div className="field">
+                              <label>Τύπος κατεργασίας</label>
+                              <select value={entry.type || ''} onChange={e => setIdxTillageField(activePlot, yr, idx, 'type', e.target.value)}>
+                                <option value="">Επιλέξτε...</option>
+                                {TILLAGE_TYPES.map(t => <option key={t}>{t}</option>)}
+                              </select>
+                              {entry.type === 'Άλλο' && <input type="text" placeholder="Παρακαλώ προσδιορίστε..." style={{marginTop:'6px'}} value={entry.type_other || ''} onChange={e => setIdxTillageField(activePlot, yr, idx, 'type_other', e.target.value)} />}
+                            </div>
+                            <div className="field">
+                              <label>Μήνας εφαρμογής</label>
+                              <select value={entry.month || ''} onChange={e => setIdxTillageField(activePlot, yr, idx, 'month', e.target.value)}>
+                                <option value="">Επιλέξτε...</option>
+                                {MONTHS.map(m => <option key={m}>{m}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                          <div className="field" style={{maxWidth:'200px'}}>
+                            <label>Βάθος εφαρμογής (cm)</label>
+                            <input type="number" placeholder="π.χ. 25" value={entry.depth || ''} onChange={e => setIdxTillageField(activePlot, yr, idx, 'depth', e.target.value)} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </>);
+              })()}
+
+              {/* FERTILIZER_N */}
+              {activeFieldSection === 'fertilizer_n' && (<>
+                <div className="step-title">🧪 Λιπάσματα Αζωτούχα — Αγροτεμάχιο {activePlot}</div>
+                <div className="step-sub">Τύπος, μήνας εφαρμογής και ποσότητα ανά έτος.</div>
+                <div className="field" style={{marginBottom:'1.5rem'}}>
+                  <label>Χρησιμοποιήσατε λιπάσματα με άζωτο;</label>
+                  <div className="radio-row" style={{marginTop:'6px'}}>
+                    {['Ναι','Όχι'].map(opt => (
+                      <label key={opt} className="radio-opt">
+                        <input type="radio" name={`fert_n_${activePlot}`} value={opt} checked={fv(activePlot,'fertilizer_n','applied') === opt} onChange={() => setFld(activePlot,'fertilizer_n','applied',opt)} style={{width:'auto'}} />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {fv(activePlot,'fertilizer_n','applied') === 'Ναι' && getFieldYears(activePlot,'fertilizer_n').map(yr => (
+                  <YearBlock
+                    key={yr}
+                    year={yr}
+                    fields={getFieldSectionFields('fertilizer_n')}
+                    data={fieldData[`p${activePlot}`]?.fertilizer_n?.[yr]}
+                    onChange={(y, f, v) => setFldY(activePlot, 'fertilizer_n', y, f, v)}
+                    onRemove={(y) => removeFieldYear(activePlot, 'fertilizer_n', y)}
+                    canRemove={getFieldYears(activePlot,'fertilizer_n').length > 1}
+                    isEquip={false}
+                  />
+                ))}
+              </>)}
+
+              {/* FERTILIZER_ORG */}
+              {activeFieldSection === 'fertilizer_org' && (<>
+                <div className="step-title">🌿 Λιπάσματα Οργανικά — Αγροτεμάχιο {activePlot}</div>
+                <div className="step-sub">Τύπος, μήνας εφαρμογής και ποσότητα ανά έτος.</div>
+                <div className="field" style={{marginBottom:'1.5rem'}}>
+                  <label>Χρησιμοποιήσατε οργανικά λιπάσματα;</label>
+                  <div className="radio-row" style={{marginTop:'6px'}}>
+                    {['Ναι','Όχι'].map(opt => (
+                      <label key={opt} className="radio-opt">
+                        <input type="radio" name={`fert_org_${activePlot}`} value={opt} checked={fv(activePlot,'fertilizer_org','applied') === opt} onChange={() => setFld(activePlot,'fertilizer_org','applied',opt)} style={{width:'auto'}} />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {fv(activePlot,'fertilizer_org','applied') === 'Ναι' && getFieldYears(activePlot,'fertilizer_org').map(yr => (
+                  <YearBlock
+                    key={yr}
+                    year={yr}
+                    fields={getFieldSectionFields('fertilizer_org')}
+                    data={fieldData[`p${activePlot}`]?.fertilizer_org?.[yr]}
+                    onChange={(y, f, v) => setFldY(activePlot, 'fertilizer_org', y, f, v)}
+                    onRemove={(y) => removeFieldYear(activePlot, 'fertilizer_org', y)}
+                    canRemove={getFieldYears(activePlot,'fertilizer_org').length > 1}
+                    isEquip={false}
+                  />
+                ))}
+              </>)}
+
               {/* YEAR-BASED SECTIONS */}
               {FIELD_YEAR_SECTIONS.includes(activeFieldSection) && (() => {
                 const sec = activeFieldSection;
@@ -1270,8 +1418,8 @@ export default function Home() {
                   ['Νομός', onb.region || '—'],
                   ['Στρέμματα', onb.hectares ? `${onb.hectares} στρ.` : '—'],
                   ['Τεμάχια', onb.plots || '—'],
-                  ['Καλλιέργειες', onb.crops.length ? onb.crops.join(', ') : '—'],
-                  ['Εξοπλισμός', onb.equipment.length ? onb.equipment.join(', ') : '—'],
+                  ['Καλλιέργειες', onb.crops.length ? onb.crops.map(c => c === 'Άλλο' && onb.crops_other ? `Άλλο: ${onb.crops_other}` : c).join(', ') : '—'],
+                  ['Εξοπλισμός', onb.equipment.length ? onb.equipment.map(e => e === 'Άλλος εξοπλισμός' && onb.equipment_other ? `Άλλος: ${onb.equipment_other}` : e).join(', ') : '—'],
                   ['Μέγεθος εκμ.', onb.farm_size ? (onb.farm_size === 'Άλλο' ? onb.farm_size_other || 'Άλλο' : onb.farm_size) : '—'],
                   ['Κίνητρο', onb.motivation ? (onb.motivation === 'Άλλο' ? onb.motivation_other || 'Άλλο' : onb.motivation) : '—'],
                   ['Αποτύπωμα CO₂', onb.carbon_measured || '—'],
@@ -1310,12 +1458,6 @@ export default function Home() {
               const info = pData.info || {};
               const cert = pData.certification || {};
               const fnVals = (sec, yr, keys) => keys.map(k => fyv(p,sec,yr,k)).filter(Boolean).join(' · ');
-              const files = [
-                gisFiles[`p${p}`] ? `GIS: ${gisFiles[`p${p}`].name}` : null,
-                soilFiles[`p${p}`] ? `Εδαφ.: ${soilFiles[`p${p}`].name}` : null,
-                certFiles[`p${p}`] ? `Πιστ.: ${certFiles[`p${p}`].name}` : null,
-                ...(legalFiles[`p${p}`] || []).map(f => `ΟΣΔΕ: ${f.name}`),
-              ].filter(Boolean);
               return (
                 <div key={p} className="card" style={{marginBottom:'1rem'}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px',paddingBottom:'10px',borderBottom:'1px solid #e0ead8'}}>
@@ -1329,7 +1471,14 @@ export default function Home() {
                       <div key={k} style={{display:'flex',gap:'4px'}}><span style={{color:'#999',width:'110px',flexShrink:0}}>{k}</span><span style={{color:'#333',fontWeight:'500'}}>{v}</span></div>
                     ))}
                   </div>
-                  {files.length > 0 && <div style={{fontSize:'11px',color:'#4a8c2a',marginBottom:'10px'}}>{files.join(' · ')}</div>}
+                  {(gisFiles[`p${p}`]||soilFiles[`p${p}`]||certFiles[`p${p}`]||(legalFiles[`p${p}`]||[]).length>0) && (
+                    <div style={{fontSize:'11px',marginBottom:'10px',display:'flex',flexWrap:'wrap',gap:'6px'}}>
+                      {gisFiles[`p${p}`]&&<span onClick={()=>window.open(URL.createObjectURL(gisFiles[`p${p}`]))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer'}}>GIS: {gisFiles[`p${p}`].name}</span>}
+                      {soilFiles[`p${p}`]&&<span onClick={()=>window.open(URL.createObjectURL(soilFiles[`p${p}`]))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer'}}>Εδαφ.: {soilFiles[`p${p}`].name}</span>}
+                      {certFiles[`p${p}`]&&<span onClick={()=>window.open(URL.createObjectURL(certFiles[`p${p}`]))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer'}}>Πιστ.: {certFiles[`p${p}`].name}</span>}
+                      {(legalFiles[`p${p}`]||[]).map(f=><span key={f.name} onClick={()=>window.open(URL.createObjectURL(f))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer'}}>ΟΣΔΕ: {f.name}</span>)}
+                    </div>
+                  )}
 
                   {/* Καλλιέργειες & Κατεργασία */}
                   {getFieldYears(p,'crops').some(yr => fyv(p,'crops',yr,'main')) && (
@@ -1415,8 +1564,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div style={{padding:'1.5rem 2rem',borderBottom:'2px solid #e8f0e0'}}>
-                  <div style={{fontSize:'13px',fontWeight:'700',color:'#1a3d2b',marginBottom:'1rem'}}>Στοιχεία Εγγραφής</div>
+                <div style={{padding:'1.5rem 2rem',borderBottom:'3px solid #2D5016'}}>
+                  <div style={{fontSize:'13px',fontWeight:'700',color:'#2D5016',marginBottom:'1rem',paddingBottom:'6px',borderBottom:'1px solid #c8e0b4'}}>Στοιχεία Εγγραφής</div>
                   {[
                     ['Τύπος οντότητας', onb.type],
                     ['Ονοματεπώνυμο', `${onb.firstName} ${onb.lastName}`.trim() || null],
@@ -1445,22 +1594,31 @@ export default function Home() {
                 </div>
 
                 {activeEquipList.length > 0 && (
-                  <div style={{padding:'1.5rem 2rem',borderBottom:'2px solid #e8f0e0'}}>
-                    <div style={{fontSize:'13px',fontWeight:'700',color:'#1a3d2b',marginBottom:'1rem'}}>Εξοπλισμός</div>
+                  <div style={{padding:'1.5rem 2rem',borderBottom:'3px solid #2D5016'}}>
+                    <div style={{fontSize:'13px',fontWeight:'700',color:'#2D5016',marginBottom:'1rem',paddingBottom:'6px',borderBottom:'1px solid #c8e0b4'}}>Εξοπλισμός</div>
                     {activeEquipList.map(eq => {
                       const schema = EQUIPMENT_SCHEMAS[eq]; const eqEntry = equipData[eq] || {};
                       const years = getEquipYears(eq); const machines = eqEntry.machines || [{}];
+                      const eqLabel = eq === 'Άλλος εξοπλισμός' && onb.equipment_other ? `${eq} (${onb.equipment_other})` : eq;
                       return (
-                        <div key={eq} style={{marginBottom:'1rem'}}>
-                          <div style={{fontSize:'12px',fontWeight:'600',color:'#333',marginBottom:'6px'}}>{schema.icon} {eq}</div>
+                        <div key={eq} style={{marginBottom:'1.25rem',paddingBottom:'1rem',borderBottom:'1px solid #e8f0e0'}}>
+                          <div style={{fontSize:'12px',fontWeight:'700',color:'#2D5016',marginBottom:'6px'}}>{schema.icon} {eqLabel}</div>
                           {machines.map((m, i) => (
                             <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 12px',marginBottom:'6px',fontSize:'12px'}}>
-                              {schema.instanceFields.map(f => <div key={f.key} style={{display:'flex',gap:'6px'}}><span style={{color:'#999',width:'100px',flexShrink:0}}>{f.label}</span><span style={{color:'#333',fontWeight:'500'}}>{m[f.key] === 'Άλλο' ? (m[`${f.key}_other`] || 'Άλλο') : (m[f.key] || '—')}</span></div>)}
+                              {schema.instanceFields.map(f => {
+                                const v = m[f.key] === 'Άλλο' ? (m[`${f.key}_other`] || 'Άλλο') : m[f.key];
+                                if (!v) return null;
+                                return <div key={f.key} style={{display:'flex',gap:'6px'}}><span style={{color:'#999',width:'100px',flexShrink:0}}>{f.label}</span><span style={{color:'#333',fontWeight:'500'}}>{v}</span></div>;
+                              })}
                             </div>
                           ))}
                           <table style={{width:'100%',borderCollapse:'collapse',fontSize:'12px',marginTop:'6px'}}>
-                            <thead><tr style={{background:'#f4f8f0'}}><th style={{padding:'4px 8px',textAlign:'left',color:'#1a3d2b',fontWeight:'600'}}>Έτος</th>{schema.yearlyFields.map(yf => <th key={yf.key} style={{padding:'4px 8px',textAlign:'left',color:'#1a3d2b',fontWeight:'600'}}>{yf.label}</th>)}</tr></thead>
-                            <tbody>{years.map(yr => <tr key={yr}><td style={{padding:'4px 8px',color:'#1a3d2b',fontWeight:'600'}}>{yr}</td>{schema.yearlyFields.map(yf => <td key={yf.key} style={{padding:'4px 8px',color:'#444'}}>{eqEntry.years?.[yr]?.[yf.key] || '—'}</td>)}</tr>)}</tbody>
+                            <thead><tr style={{background:'#f0f7ec'}}><th style={{padding:'5px 8px',textAlign:'left',color:'#2D5016',fontWeight:'600'}}>Έτος</th>{schema.yearlyFields.map(yf => <th key={yf.key} style={{padding:'5px 8px',textAlign:'left',color:'#2D5016',fontWeight:'600'}}>{yf.label}</th>)}</tr></thead>
+                            <tbody>{years.map(yr => {
+                              const rowHasData = schema.yearlyFields.some(yf => eqEntry.years?.[yr]?.[yf.key]);
+                              if (!rowHasData) return null;
+                              return <tr key={yr} style={{borderBottom:'1px solid #f0f5ea'}}><td style={{padding:'5px 8px',color:'#2D5016',fontWeight:'600'}}>{yr}</td>{schema.yearlyFields.map(yf => <td key={yf.key} style={{padding:'5px 8px',color:'#444'}}>{eqEntry.years?.[yr]?.[yf.key] || ''}</td>)}</tr>;
+                            })}</tbody>
                           </table>
                         </div>
                       );
@@ -1469,23 +1627,36 @@ export default function Home() {
                 )}
 
                 <div style={{padding:'1.5rem 2rem'}}>
-                  <div style={{fontSize:'13px',fontWeight:'700',color:'#1a3d2b',marginBottom:'1rem'}}>Αγροτεμάχια</div>
+                  <div style={{fontSize:'13px',fontWeight:'700',color:'#2D5016',marginBottom:'1rem',paddingBottom:'6px',borderBottom:'1px solid #c8e0b4'}}>Αγροτεμάχια</div>
                   {Array.from({length:numPlots},(_,i)=>i+1).map(plot => {
                     const pData = fieldData[`p${plot}`] || {}; const info = pData.info || {}; const cert = pData.certification || {};
                     return (
-                      <div key={plot} style={{marginBottom:'1.5rem'}}>
-                        <div style={{background:'#f0f7ec',padding:'4px 10px',borderRadius:'4px',fontSize:'12px',fontWeight:'700',color:'#1a3d2b',marginBottom:'8px'}}>📍 Αγροτεμάχιο {plot}</div>
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 12px',fontSize:'12px',marginBottom:'6px'}}>
-                          {[['Περιοχή',info.region],['Έκταση',info.area?`${info.area} στρ.`:null],['Αρδευόμενο',info.irrigated],['Τύπος εδάφους',info.soil_type],['Cover crops',info.cover_crops],['Βόσκηση',info.grazing],['Υπολείμματα',info.residues],cert.has_cert==='Ναι'?['Πιστοποίηση',cert.cert_type]:null,cert.has_cert==='Ναι'&&cert.cert_number?['Αρ.Πιστ.',cert.cert_number]:null].filter(r=>r&&r[1]).map(([k,v]) => (
-                            <div key={k} style={{display:'flex',gap:'6px'}}><span style={{color:'#999',width:'120px',flexShrink:0}}>{k}</span><span style={{color:'#333',fontWeight:'500'}}>{v}</span></div>
+                      <div key={plot} style={{marginBottom:'2rem',paddingBottom:'1rem',borderBottom:'1px solid #e8f0e0'}}>
+                        <div style={{background:'#f0f7ec',padding:'6px 12px',borderRadius:'4px',fontSize:'12px',fontWeight:'700',color:'#2D5016',marginBottom:'10px',borderLeft:'3px solid #2D5016'}}>📍 Αγροτεμάχιο {plot}</div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3px 12px',fontSize:'12px',marginBottom:'8px'}}>
+                          {[['Περιοχή',info.region],['Έκταση',info.area?`${info.area} στρ.`:null],['Αρδευόμενο',info.irrigated],['Τύπος εδάφους',info.soil_type],['Cover crops',info.cover_crops],['Βόσκηση',info.grazing],['Υπολείμματα',info.residues],cert.has_cert==='Ναι'?['Πιστοποίηση',cert.cert_type]:null,cert.has_cert==='Ναι'&&cert.cert_number?['Αρ. Πιστ.',cert.cert_number]:null].filter(r=>r&&r[1]).map(([k,v]) => (
+                            <div key={k} style={{display:'flex',gap:'6px',padding:'2px 0'}}><span style={{color:'#888',width:'120px',flexShrink:0}}>{k}</span><span style={{color:'#333',fontWeight:'500'}}>{v}</span></div>
                           ))}
                         </div>
                         {(gisFiles[`p${plot}`]||certFiles[`p${plot}`]||soilFiles[`p${plot}`]||(legalFiles[`p${plot}`]||[]).length>0) && (
-                          <div style={{fontSize:'11px',color:'#4a8c2a',marginBottom:'6px'}}>
-                            {gisFiles[`p${plot}`]&&<span>GIS: {gisFiles[`p${plot}`].name} · </span>}
-                            {soilFiles[`p${plot}`]&&<span>Εδαφ.: {soilFiles[`p${plot}`].name} · </span>}
-                            {certFiles[`p${plot}`]&&<span>Πιστ.: {certFiles[`p${plot}`].name} · </span>}
-                            {(legalFiles[`p${plot}`]||[]).map(f=><span key={f.name}>ΟΣΔΕ: {f.name} · </span>)}
+                          <div style={{fontSize:'11px',color:'#4a8c2a',marginBottom:'8px'}}>
+                            {gisFiles[`p${plot}`]&&<span>📎 GIS: {gisFiles[`p${plot}`].name} </span>}
+                            {soilFiles[`p${plot}`]&&<span>📎 Εδαφ.: {soilFiles[`p${plot}`].name} </span>}
+                            {certFiles[`p${plot}`]&&<span>📎 Πιστ.: {certFiles[`p${plot}`].name} </span>}
+                            {(legalFiles[`p${plot}`]||[]).map(f=><span key={f.name}>📎 ΟΣΔΕ: {f.name} </span>)}
+                          </div>
+                        )}
+                        {/* Tillage (array-based) */}
+                        {ALL_YEARS.some(yr => (getIdxTillageEntries(plot, yr)||[]).length > 0) && (
+                          <div style={{marginBottom:'10px'}}>
+                            <div style={{fontSize:'12px',fontWeight:'600',color:'#2D5016',marginBottom:'4px'}}>🔨 Κατεργασία</div>
+                            {ALL_YEARS.map(yr => {
+                              const entries = getIdxTillageEntries(plot, yr);
+                              if (!entries.length) return null;
+                              return entries.map((en, idx) => en.type ? (
+                                <div key={`${yr}_${idx}`} style={{fontSize:'11px',color:'#444',padding:'1px 0'}}><span style={{fontWeight:'600',color:'#2D5016',marginRight:'6px'}}>{yr} Εργ.{idx+1}</span>{en.type}{en.month&&` · ${en.month}`}{en.depth&&` · ${en.depth}cm`}</div>
+                              ) : null);
+                            })}
                           </div>
                         )}
                         {FIELD_YEAR_SECTIONS.map(sec => {
@@ -1494,12 +1665,34 @@ export default function Home() {
                           const hasData = years.some(yr => fields.some(f => secData[yr]?.[f.key]));
                           if (!hasData) return null;
                           return (
-                            <div key={sec} style={{marginBottom:'8px'}}>
-                              <div style={{fontSize:'12px',fontWeight:'600',color:'#555',marginBottom:'4px'}}>{secObj.icon} {secObj.label}</div>
-                              <table style={{width:'100%',borderCollapse:'collapse',fontSize:'11px'}}><thead><tr style={{background:'#f8fbf6'}}><th style={{padding:'3px 6px',textAlign:'left',color:'#1a3d2b',fontWeight:'600'}}>Έτος</th>{fields.map(f=><th key={f.key} style={{padding:'3px 6px',textAlign:'left',color:'#1a3d2b',fontWeight:'600'}}>{f.label}</th>)}</tr></thead><tbody>{years.map(yr=><tr key={yr}><td style={{padding:'3px 6px',color:'#1a3d2b',fontWeight:'600'}}>{yr}</td>{fields.map(f=><td key={f.key} style={{padding:'3px 6px',color:'#444'}}>{secData[yr]?.[f.key]||'—'}</td>)}</tr>)}</tbody></table>
+                            <div key={sec} style={{marginBottom:'10px'}}>
+                              <div style={{fontSize:'12px',fontWeight:'600',color:'#2D5016',marginBottom:'4px'}}>{secObj.icon} {secObj.label}</div>
+                              <table style={{width:'100%',borderCollapse:'collapse',fontSize:'11px'}}><thead><tr style={{background:'#f0f7ec'}}><th style={{padding:'4px 6px',textAlign:'left',color:'#2D5016',fontWeight:'600'}}>Έτος</th>{fields.map(f=><th key={f.key} style={{padding:'4px 6px',textAlign:'left',color:'#2D5016',fontWeight:'600'}}>{f.label}</th>)}</tr></thead><tbody>{years.map(yr=>{
+                                const rowHasData = fields.some(f => secData[yr]?.[f.key]);
+                                if (!rowHasData) return null;
+                                return <tr key={yr} style={{borderBottom:'1px solid #f0f5ea'}}><td style={{padding:'4px 6px',color:'#2D5016',fontWeight:'600'}}>{yr}</td>{fields.map(f=><td key={f.key} style={{padding:'4px 6px',color:'#444'}}>{secData[yr]?.[f.key]||''}</td>)}</tr>;
+                              })}</tbody></table>
                             </div>
                           );
                         })}
+                        {/* Fertilizer N */}
+                        {pData.fertilizer_n?.applied === 'Ναι' && getFieldYears(plot,'fertilizer_n').some(yr=>fyv(plot,'fertilizer_n',yr,'type')) && (
+                          <div style={{marginBottom:'10px'}}>
+                            <div style={{fontSize:'12px',fontWeight:'600',color:'#2D5016',marginBottom:'4px'}}>🧪 Αζωτούχα Λιπάσματα</div>
+                            {getFieldYears(plot,'fertilizer_n').filter(yr=>fyv(plot,'fertilizer_n',yr,'type')).map(yr=>(
+                              <div key={yr} style={{fontSize:'11px',color:'#444',padding:'1px 0'}}><span style={{fontWeight:'600',color:'#2D5016',marginRight:'6px'}}>{yr}</span>{fyv(plot,'fertilizer_n',yr,'type')}{fyv(plot,'fertilizer_n',yr,'qty')&&` · ${fyv(plot,'fertilizer_n',yr,'qty')} kg/στρ.`}</div>
+                            ))}
+                          </div>
+                        )}
+                        {/* Fertilizer Org */}
+                        {pData.fertilizer_org?.applied === 'Ναι' && getFieldYears(plot,'fertilizer_org').some(yr=>fyv(plot,'fertilizer_org',yr,'type')) && (
+                          <div style={{marginBottom:'10px'}}>
+                            <div style={{fontSize:'12px',fontWeight:'600',color:'#2D5016',marginBottom:'4px'}}>🌿 Οργανικά Λιπάσματα</div>
+                            {getFieldYears(plot,'fertilizer_org').filter(yr=>fyv(plot,'fertilizer_org',yr,'type')).map(yr=>(
+                              <div key={yr} style={{fontSize:'11px',color:'#444',padding:'1px 0'}}><span style={{fontWeight:'600',color:'#2D5016',marginRight:'6px'}}>{yr}</span>{fyv(plot,'fertilizer_org',yr,'type')}{fyv(plot,'fertilizer_org',yr,'qty')&&` · ${fyv(plot,'fertilizer_org',yr,'qty')} kg/στρ.`}</div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

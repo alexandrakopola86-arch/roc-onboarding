@@ -174,21 +174,33 @@ function buildHtml(onb, eq, fields, fileNames) {
   const s3 = tbl(s3rows);
 
   return `<!DOCTYPE html>
-<html><head><meta charset="UTF-8">
-<title>Νέα Εγγραφή - Roots of Carbon</title></head>
-<body style="font-family:Arial,Helvetica,sans-serif;background:#f4f7f4;margin:0;padding:20px;">
-<div style="max-width:700px;margin:0 auto;background:white;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Νέα Εγγραφή - Roots of Carbon</title>
+<style>
+  @media only screen and (max-width:600px){
+    .email-wrap{width:100%!important;max-width:100%!important;border-radius:0!important}
+    .email-table{width:100%!important}
+    td[colspan="2"]{display:block;width:100%!important}
+  }
+</style>
+</head>
+<body style="font-family:Arial,Helvetica,sans-serif;background:#f4f7f4;margin:0;padding:16px;">
+<div class="email-wrap" style="max-width:600px;margin:0 auto;background:white;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
 
   <div style="background:${GREEN};padding:20px 24px;">
     <div style="color:white;font-size:18px;font-weight:700;">Νέα Εγγραφή — Roots of Carbon</div>
     <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:4px;">Ημερομηνία υποβολής: ${now}</div>
   </div>
 
+  <div style="padding:16px 20px;background:#f0f7ec;border-bottom:1px solid #c8e0b4;text-align:center;">
+    <a href="https://rootsofcarbon.gr/submissions" style="display:inline-block;background:#2D5016;color:white;text-decoration:none;padding:10px 22px;border-radius:6px;font-size:13px;font-weight:700;">📎 Προβολή PDF</a>
+  </div>
+
   <div style="padding:0;">
     ${s1}
-    <div style="height:12px;"></div>
+    <div style="height:1px;background:#e0ead8;margin:0 16px;"></div>
     ${s2}
-    <div style="height:12px;"></div>
+    <div style="height:1px;background:#e0ead8;margin:0 16px;"></div>
     ${s3}
   </div>
 
