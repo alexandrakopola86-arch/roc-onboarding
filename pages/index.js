@@ -588,7 +588,7 @@ export default function Home() {
         .prog-bar{background:#dde8d8;border-radius:99px;height:4px;margin-bottom:1.5rem;overflow:hidden}
         .prog-fill{background:#4a8c2a;height:100%;border-radius:99px;transition:width 0.4s}
         .prog-label{font-size:12px;color:#666;margin-bottom:6px}
-        .card{background:white;border-radius:12px;padding:2rem;border:1px solid #e0ead8}
+        .card{background:white;border-radius:12px;padding:2rem;border:1px solid #e0ead8;overflow:hidden;word-break:break-word}
         .step-title{font-size:15px;font-weight:600;color:#1a3d2b;margin-bottom:4px}
         .step-sub{font-size:13px;color:#888;margin-bottom:1.5rem}
         label{display:block;font-size:13px;font-weight:500;color:#333;margin-bottom:5px}
@@ -1419,7 +1419,7 @@ export default function Home() {
                 <div style={{fontWeight:'600',color:'#1a3d2b',fontSize:'14px'}}>📝 Στοιχεία Εγγραφής</div>
                 <button className="btn-edit" onClick={() => { setFromPreview(true); setPhase('onboarding'); setOnbStep(1); }}>✏️ Επεξεργασία</button>
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3px 16px'}}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'3px 16px',overflow:'hidden'}}>
                 {[
                   ['Τύπος', onb.type],
                   onb.orgName ? ['Επωνυμία', onb.orgName] : null,
@@ -1444,9 +1444,9 @@ export default function Home() {
                   carbonFile ? ['Αρχείο CO₂', carbonFile.name] : null,
                   agronomistFile ? ['Αρχείο γεωπόνου', agronomistFile.name] : null,
                 ].filter(r => r && r[1]).map(([k, v]) => (
-                  <div key={k} style={{display:'flex',gap:'6px',fontSize:'12px',padding:'2px 0'}}>
-                    <span style={{color:'#999',width:'140px',flexShrink:0}}>{k}</span>
-                    <span style={{color:'#333',fontWeight:'500'}}>{v}</span>
+                  <div key={k} style={{display:'flex',gap:'6px',fontSize:'12px',padding:'2px 0',minWidth:0,overflow:'hidden'}}>
+                    <span style={{color:'#999',width:'110px',flexShrink:0}}>{k}</span>
+                    <span style={{color:'#333',fontWeight:'500',overflow:'hidden',wordBreak:'break-word',minWidth:0}}>{v}</span>
                   </div>
                 ))}
               </div>
@@ -1480,17 +1480,17 @@ export default function Home() {
                   </div>
 
                   {/* Βασικά στοιχεία */}
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 12px',fontSize:'12px',marginBottom:'10px'}}>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 12px',fontSize:'12px',marginBottom:'10px',overflow:'hidden'}}>
                     {[['Περιοχή',info.region],['Έκταση',info.area?`${info.area} στρ.`:null],['Αρδευόμενο',info.irrigated],['Τύπος εδάφους',info.soil_type],['Cover crops',info.cover_crops],['Βόσκηση',info.grazing]].filter(r=>r&&r[1]).map(([k,v])=>(
-                      <div key={k} style={{display:'flex',gap:'4px'}}><span style={{color:'#999',width:'110px',flexShrink:0}}>{k}</span><span style={{color:'#333',fontWeight:'500'}}>{v}</span></div>
+                      <div key={k} style={{display:'flex',gap:'4px',minWidth:0,overflow:'hidden'}}><span style={{color:'#999',width:'100px',flexShrink:0}}>{k}</span><span style={{color:'#333',fontWeight:'500',minWidth:0,overflow:'hidden',wordBreak:'break-word'}}>{v}</span></div>
                     ))}
                   </div>
                   {(gisFiles[`p${p}`]||soilFiles[`p${p}`]||certFiles[`p${p}`]||(legalFiles[`p${p}`]||[]).length>0) && (
-                    <div style={{fontSize:'11px',marginBottom:'10px',display:'flex',flexWrap:'wrap',gap:'6px'}}>
-                      {gisFiles[`p${p}`]&&<span onClick={()=>window.open(URL.createObjectURL(gisFiles[`p${p}`]))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer'}}>GIS: {gisFiles[`p${p}`].name}</span>}
-                      {soilFiles[`p${p}`]&&<span onClick={()=>window.open(URL.createObjectURL(soilFiles[`p${p}`]))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer'}}>Εδαφ.: {soilFiles[`p${p}`].name}</span>}
-                      {certFiles[`p${p}`]&&<span onClick={()=>window.open(URL.createObjectURL(certFiles[`p${p}`]))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer'}}>Πιστ.: {certFiles[`p${p}`].name}</span>}
-                      {(legalFiles[`p${p}`]||[]).map(f=><span key={f.name} onClick={()=>window.open(URL.createObjectURL(f))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer'}}>ΟΣΔΕ: {f.name}</span>)}
+                    <div style={{fontSize:'11px',marginBottom:'10px',display:'flex',flexWrap:'wrap',gap:'6px',overflow:'hidden'}}>
+                      {gisFiles[`p${p}`]&&<span onClick={()=>window.open(URL.createObjectURL(gisFiles[`p${p}`]))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer',wordBreak:'break-all'}}>GIS: {gisFiles[`p${p}`].name}</span>}
+                      {soilFiles[`p${p}`]&&<span onClick={()=>window.open(URL.createObjectURL(soilFiles[`p${p}`]))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer',wordBreak:'break-all'}}>Εδαφ.: {soilFiles[`p${p}`].name}</span>}
+                      {certFiles[`p${p}`]&&<span onClick={()=>window.open(URL.createObjectURL(certFiles[`p${p}`]))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer',wordBreak:'break-all'}}>Πιστ.: {certFiles[`p${p}`].name}</span>}
+                      {(legalFiles[`p${p}`]||[]).map(f=><span key={f.name} onClick={()=>window.open(URL.createObjectURL(f))} style={{color:'#4a8c2a',textDecoration:'underline',cursor:'pointer',wordBreak:'break-all'}}>ΟΣΔΕ: {f.name}</span>)}
                     </div>
                   )}
 
