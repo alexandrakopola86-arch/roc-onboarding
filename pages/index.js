@@ -422,6 +422,38 @@ export default function Home() {
     return true;
   };
 
+  const validateInfoSection = (plot) => {
+    if (fv(plot,'info','soil_type') === 'Άλλο' && !fv(plot,'info','soil_type_other')) return false;
+    if (fv(plot,'info','lime') === 'Ναι') {
+      if (!fv(plot,'info','lime_type')) return false;
+      if (fv(plot,'info','lime_type') === 'Άλλο' && !fv(plot,'info','lime_type_other')) return false;
+      if (!fv(plot,'info','lime_qty')) return false;
+    }
+    if (fv(plot,'info','residues') === 'Άλλο' && !fv(plot,'info','residues_other')) return false;
+    if (fv(plot,'info','residues') === 'Απομάκρυνση' && !fv(plot,'info','residues_pct')) return false;
+    if (fv(plot,'info','irrigated') === 'Ναι') {
+      if (!fv(plot,'info','irr_qty')) return false;
+      if (!fv(plot,'info','irr_type')) return false;
+      if (fv(plot,'info','irr_type') === 'Άλλο' && !fv(plot,'info','irr_type_other')) return false;
+      if (!fv(plot,'info','pump_type')) return false;
+      if (fv(plot,'info','pump_type') === 'Άλλο' && !fv(plot,'info','pump_type_other')) return false;
+      if (['Ηλεκτροκίνητη','Φωτοβολταϊκό/ΑΠΕ'].includes(fv(plot,'info','pump_type')) && !fv(plot,'info','pump_kwh')) return false;
+      if (['Πετρελαιοκίνητη (Diesel)','Βενζινοκίνητη','Άλλο'].includes(fv(plot,'info','pump_type')) && !fv(plot,'info','fuel_liters')) return false;
+    }
+    return true;
+  };
+
+  const validateTillageEntries = (plot) => {
+    const years = getFieldYears(plot, 'tillage');
+    for (const yr of years) {
+      for (const entry of getIdxTillageEntries(plot, yr)) {
+        if (!entry.type || !entry.month || !entry.depth) return false;
+        if (entry.type === 'Άλλο' && !entry.type_other) return false;
+      }
+    }
+    return true;
+  };
+
   const nextOnbStep = () => {
     if (!validateOnb(onbStep)) return;
     if (fromPreview) { setFromPreview(false); setPhase('preview'); return; }
@@ -487,11 +519,42 @@ export default function Home() {
         return;
       }
     }
+    if (activeFieldSection === 'info' && !validateInfoSection(activePlot)) {
+      setSectionErrors('Παρακαλούμε συμπληρώστε όλα τα υποχρεωτικά πεδία (*) της ενότητας.');
+      return;
+    }
+    if (activeFieldSection === 'tillage') {
+      const hasAny = ALL_YEARS.some(y => getIdxTillageEntries(activePlot, y).length > 0);
+      if (!hasAny) {
+        setSectionErrors('Παρακαλούμε καταχωρίστε κατεργασία για τουλάχιστον ένα έτος.');
+        return;
+      }
+      if (!validateTillageEntries(activePlot)) {
+        setSectionErrors('Παρακαλούμε συμπληρώστε τύπο, μήνα και βάθος για κάθε καταχώρηση κατεργασίας.');
+        return;
+      }
+    }
+    if (activeFieldSection === 'fertilizer_n' && fv(activePlot,'fertilizer_n','applied') === 'Ναι') {
+      if (!validateFieldYears(activePlot, 'fertilizer_n', getFieldSectionFields('fertilizer_n'))) {
+        setSectionErrors('Παρακαλούμε συμπληρώστε τύπο, μήνα και ποσότητα για κάθε έτος.');
+        return;
+      }
+    }
+    if (activeFieldSection === 'fertilizer_org' && fv(activePlot,'fertilizer_org','applied') === 'Ναι') {
+      if (!validateFieldYears(activePlot, 'fertilizer_org', getFieldSectionFields('fertilizer_org'))) {
+        setSectionErrors('Παρακαλούμε συμπληρώστε τύπο, μήνα και ποσότητα για κάθε έτος.');
+        return;
+      }
+    }
     if (activeFieldSection === 'certification' && fv(activePlot, 'certification', 'has_cert') === 'Ναι') {
       if (!fv(activePlot, 'certification', 'cert_number') && !certFiles[`p${activePlot}`]) {
         setSectionErrors('Παρακαλώ συμπληρώστε τον αριθμό πιστοποίησης ή ανεβάστε το αρχείο πιστοποίησης.');
         return;
       }
+    }
+    if (activeFieldSection === 'legitimacy' && fv(activePlot, 'legitimacy', 'carbon_declaration') !== 'true') {
+      setSectionErrors('Παρακαλούμε αποδεχτείτε την υπεύθυνη δήλωση για να συνεχίσετε.');
+      return;
     }
     setSectionErrors('');
     if (fromPreview) { setFromPreview(false); setPhase('preview'); return; }
@@ -588,7 +651,7 @@ export default function Home() {
           </div>
         </div>
       )}
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Inter',sans-serif;background:#f4f7f4;min-height:100vh;padding:2rem 1rem}
         .wrap{max-width:640px;margin:0 auto}
@@ -685,7 +748,7 @@ export default function Home() {
           .card{border:none!important;border-radius:0!important;padding:0!important}
           table{page-break-inside:avoid}
         }
-      `}</style>
+      ` }} />
 
       <div className="wrap">
         <div className="header">
