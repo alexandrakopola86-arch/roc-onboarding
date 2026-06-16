@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID || '';
+const trackEvent = (name, params) => {
+  if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+    window.gtag('event', name, params || {});
+  }
+};
+
 const ALL_YEARS = [2021, 2022, 2023, 2024, 2025];
 const MONTHS = ['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
 const CROPS_LIST = ['Ελιά ελαιοποιήσιμη','Ελιά επιτραπέζια','Βαμβάκι','Μαλακό σιτάρι','Σκληρό σιτάρι','Κριθάρι','Αραβόσιτος','Βρώμη','Λούπινο','Ηλίανθος','Σόγια','Σουσάμι','Βίκος','Κουκί','Αγρανάπαυση','Πράσινο ακτινίδιο','Αμπέλι','Εσπεριδοειδή','Κηπευτικά','Άλλο','Καμία'];
@@ -282,6 +289,22 @@ export default function Home() {
     const snapshot = { phase, onbStep, onb, equipData, equipYears, equipUndoStacks, fieldData, fieldYears, fieldUndoStacks, activePlot, activeEquip, activeFieldSection };
     localStorage.setItem('roc_progress', JSON.stringify(snapshot));
   }, [phase, onbStep, onb, equipData, equipYears, equipUndoStacks, fieldData, fieldYears, fieldUndoStacks, activePlot, activeEquip, activeFieldSection]);
+
+  useEffect(() => {
+    if (phase === 'onboarding') trackEvent('onboarding_step', { step: onbStep });
+  }, [phase, onbStep]);
+
+  useEffect(() => {
+    if (phase === 'equipment' && activeEquip) trackEvent('equipment_view', { equipment: activeEquip });
+  }, [phase, activeEquip]);
+
+  useEffect(() => {
+    if (phase === 'fields') trackEvent('field_section_view', { section: activeFieldSection, plot: activePlot });
+  }, [phase, activeFieldSection, activePlot]);
+
+  useEffect(() => {
+    if (phase === 'preview' || phase === 'done') trackEvent('phase_change', { phase });
+  }, [phase]);
 
   const setOnbField = (k, v) => setOnb(p => ({ ...p, [k]: v }));
   const toggleArr = (k, v) => setOnb(p => ({ ...p, [k]: p[k].includes(v) ? p[k].filter(x => x !== v) : [...p[k], v] }));
@@ -637,6 +660,13 @@ export default function Home() {
         <title>Roots of Carbon — Εγγραφή</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+        {GA_ID && <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}></script>}
+        {GA_ID && <script dangerouslySetInnerHTML={{ __html: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${GA_ID}');
+        ` }} />}
       </Head>
       {showResumeModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
