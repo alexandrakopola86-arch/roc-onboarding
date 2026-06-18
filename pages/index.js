@@ -404,6 +404,10 @@ export default function Home() {
     }
     if (step === 3) { if (!onb.region) e.region = true; if (!onb.hectares) e.hectares = true; if (!onb.plots) e.plots = true; }
     if (step === 4 && onb.crops.length === 0) e.crops = true;
+    if (step === 4 && onb.crops.includes('Άλλο') && !onb.crops_other) e.crops_other = true;
+    if (step === 5 && onb.equipment.includes('Άλλος εξοπλισμός') && !onb.equipment_other) e.equipment_other = true;
+    if (step === 6 && onb.farm_size === 'Άλλο' && !onb.farm_size_other) e.farm_size_other = true;
+    if (step === 6 && onb.motivation === 'Άλλο' && !onb.motivation_other) e.motivation_other = true;
     if (step === 7) {
       if (onb.carbon_measured === 'Ναι, κατά προσέγγιση' && !onb.carbonValue) e.carbonValue = true;
       if (onb.carbon_measured === 'Ναι, έχω επίσημη μέτρηση' && !onb.carbonValue && !carbonFile) e.carbonRequired = true;
@@ -936,7 +940,8 @@ export default function Home() {
                 {onbErrors.crops && <div className="err-msg" style={{marginTop:'8px'}}>Παρακαλούμε επιλέξτε τουλάχιστον μία καλλιέργεια.</div>}
                 {onb.crops.includes('Άλλο') && (
                   <div className="field" style={{marginTop:'10px'}}>
-                    <input value={onb.crops_other || ''} onChange={e => setOnbField('crops_other', e.target.value)} placeholder="Παρακαλώ προσδιορίστε καλλιέργεια..." />
+                    <input className={onbErrors.crops_other ? 'err' : ''} value={onb.crops_other || ''} onChange={e => setOnbField('crops_other', e.target.value)} placeholder="Παρακαλώ προσδιορίστε καλλιέργεια..." />
+                    {onbErrors.crops_other && <div className="err-msg" style={{marginTop:'4px'}}>Παρακαλούμε προσδιορίστε την καλλιέργεια.</div>}
                   </div>
                 )}
               </>)}
@@ -954,7 +959,8 @@ export default function Home() {
                 {onb.equipment.includes('Άλλος εξοπλισμός') && (
                   <div className="field" style={{marginTop:'10px'}}>
                     <label>Παρακαλώ προσδιορίστε τον εξοπλισμό</label>
-                    <input value={onb.equipment_other || ''} onChange={e => setOnbField('equipment_other', e.target.value)} placeholder="π.χ. Μπαλιαστικό..." />
+                    <input className={onbErrors.equipment_other ? 'err' : ''} value={onb.equipment_other || ''} onChange={e => setOnbField('equipment_other', e.target.value)} placeholder="π.χ. Μπαλιαστικό..." />
+                    {onbErrors.equipment_other && <div className="err-msg" style={{marginTop:'4px'}}>Παρακαλούμε προσδιορίστε τον εξοπλισμό.</div>}
                   </div>
                 )}
               </>)}
@@ -970,7 +976,8 @@ export default function Home() {
                         <div className="radio-dot"><div className="radio-inner" /></div><span>{o}</span>
                       </div>
                     ))}
-                    {onb.farm_size === 'Άλλο' && <input style={{marginTop:'8px'}} value={onb.farm_size_other || ''} onChange={e => setOnbField('farm_size_other', e.target.value)} placeholder="Παρακαλώ προσδιορίστε..." />}
+                    {onb.farm_size === 'Άλλο' && <input style={{marginTop:'8px'}} className={onbErrors.farm_size_other ? 'err' : ''} value={onb.farm_size_other || ''} onChange={e => setOnbField('farm_size_other', e.target.value)} placeholder="Παρακαλώ προσδιορίστε..." />}
+                    {onbErrors.farm_size_other && <div className="err-msg" style={{marginTop:'4px'}}>Παρακαλούμε προσδιορίστε το μέγεθος.</div>}
                   </div>
                 </div>
                 <div className="field" style={{marginTop:'1.25rem'}}>
@@ -981,7 +988,8 @@ export default function Home() {
                         <div className="radio-dot"><div className="radio-inner" /></div><span>{o}</span>
                       </div>
                     ))}
-                    {onb.motivation === 'Άλλο' && <input style={{marginTop:'8px'}} value={onb.motivation_other || ''} onChange={e => setOnbField('motivation_other', e.target.value)} placeholder="Παρακαλώ προσδιορίστε..." />}
+                    {onb.motivation === 'Άλλο' && <input style={{marginTop:'8px'}} className={onbErrors.motivation_other ? 'err' : ''} value={onb.motivation_other || ''} onChange={e => setOnbField('motivation_other', e.target.value)} placeholder="Παρακαλώ προσδιορίστε..." />}
+                    {onbErrors.motivation_other && <div className="err-msg" style={{marginTop:'4px'}}>Παρακαλούμε προσδιορίστε το κίνητρο.</div>}
                   </div>
                 </div>
               </>)}
