@@ -433,6 +433,7 @@ export default function Home() {
     const schema = EQUIPMENT_SCHEMAS[eq];
     for (const machine of machines) {
       for (const f of schema.instanceFields) {
+        if (!machine[f.key]) return false;
         if (f.type === 'select' && machine[f.key] === 'Άλλο' && !machine[`${f.key}_other`]) return false;
       }
     }
@@ -493,7 +494,7 @@ export default function Home() {
 
   const nextEquip = () => {
     if (!validateEquipAllos(activeEquip)) {
-      setSectionErrors('Παρακαλούμε συμπληρώστε όλα τα πεδία "Άλλο" για τον εξοπλισμό.');
+      setSectionErrors('Παρακαλούμε συμπληρώστε όλα τα υποχρεωτικά στοιχεία μηχανήματος (*).');
       return;
     }
     if (!validateEquipYears(activeEquip)) {
@@ -1109,7 +1110,7 @@ export default function Home() {
                     <div className="row2">
                       {schema.instanceFields.map(f => (
                         <div className="field" key={f.key}>
-                          <label>{f.label}</label>
+                          <label>{f.label} <span style={{color:'#e24b4a'}}>*</span></label>
                           {f.type === 'select' ? (
                             <>
                               <select value={machine[f.key] || ''} onChange={e => setMachineField(activeEquip, idx, f.key, e.target.value)}>
