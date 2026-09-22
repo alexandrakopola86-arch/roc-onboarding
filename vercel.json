@@ -1,1 +1,1 @@
-{"framework":"nextjs"}
+{"framework":"nextjs","functions":{"pages/api/submit-simple.js":{"maxDuration":30}}}

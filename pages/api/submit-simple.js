@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { renderHtmlToPdf } from '../../lib/pdf';
 
 export const config = { api: { bodyParser: { sizeLimit: '20mb' } } };
 
@@ -275,16 +276,31 @@ EMAIL: ${onb.email || '-'}
         },
       });
 
+      const summaryHtml = buildHtml(onb, eq, fields, fileNames);
+      const uploadedAttachments = attachments.map(a => ({
+        filename: a.name,
+        content: Buffer.from(a.data, 'base64'),
+        contentType: a.type || 'application/octet-stream',
+      }));
+
+      let pdfAttachment = [];
+      try {
+        const pdfBuffer = await renderHtmlToPdf(summaryHtml);
+        pdfAttachment = [{
+          filename: `Egrafi-${name.replace(/\s+/g, '_')}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+        }];
+      } catch (pdfErr) {
+        console.error('PDF generation error:', pdfErr);
+      }
+
       await transporter.sendMail({
         from: `"Roots of Carbon" <${process.env.ZOHO_SMTP_USER}>`,
         to: 'info@rootsofcarbon.gr',
         subject: `Νέα Εγγραφή: ${name} — ${new Date().toLocaleDateString('el-GR')}`,
-        html: buildHtml(onb, eq, fields, fileNames),
-        attachments: attachments.map(a => ({
-          filename: a.name,
-          content: Buffer.from(a.data, 'base64'),
-          contentType: a.type || 'application/octet-stream',
-        })),
+        html: summaryHtml,
+        attachments: [...pdfAttachment, ...uploadedAttachments],
       });
     }
 
