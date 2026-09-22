@@ -1,5 +1,14 @@
 import nodemailer from 'nodemailer';
 import { renderHtmlToPdf } from '../../lib/pdf';
+import { getAccessToken, findOrCreateFolder, uploadFile } from '../../lib/zoho';
+
+// Map from onboarding.type (Greek label) to Zoho WorkDrive folder ID (set in Vercel env vars)
+const FOLDER_IDS = {
+  'Μεμονωμένος αγρότης': process.env.ZOHO_FOLDER_AGROTIS,
+  'Αγρότης': process.env.ZOHO_FOLDER_AGROTIS,
+  'Συνεταιρισμός': process.env.ZOHO_FOLDER_SYNETAIRISMOS,
+  'Εταιρεία': process.env.ZOHO_FOLDER_ETAIREIA,
+};
 
 export const config = { api: { bodyParser: { sizeLimit: '20mb' } } };
 
@@ -264,6 +273,42 @@ EMAIL: ${onb.email || '-'}
     });
     await fr.json();
 
+    const summaryHtml = buildHtml(onb, eq, fields, fileNames);
+    const uploadedAttachments = attachments.map(a => ({
+      filename: a.name,
+      content: Buffer.from(a.data, 'base64'),
+      contentType: a.type || 'application/octet-stream',
+    }));
+
+    let pdfBuffer = null;
+    let pdfAttachment = [];
+    try {
+      pdfBuffer = await renderHtmlToPdf(summaryHtml);
+      pdfAttachment = [{
+        filename: `Egrafi-${name.replace(/\s+/g, '_')}.pdf`,
+        content: pdfBuffer,
+        contentType: 'application/pdf',
+      }];
+    } catch (pdfErr) {
+      console.error('PDF generation error:', pdfErr);
+    }
+
+    // ── Zoho WorkDrive: file the PDF + uploads into a per-person folder ──
+    if (process.env.ZOHO_CLIENT_ID && process.env.ZOHO_REFRESH_TOKEN && FOLDER_IDS[onb.type]) {
+      try {
+        const workdriveToken = await getAccessToken();
+        const folder = await findOrCreateFolder(workdriveToken, FOLDER_IDS[onb.type], name);
+        if (pdfBuffer) {
+          await uploadFile(workdriveToken, folder.id, `Egrafi-${name.replace(/\s+/g, '_')}.pdf`, pdfBuffer, 'application/pdf');
+        }
+        for (const a of uploadedAttachments) {
+          await uploadFile(workdriveToken, folder.id, a.filename, a.content, a.contentType);
+        }
+      } catch (workdriveErr) {
+        console.error('Zoho WorkDrive error:', workdriveErr);
+      }
+    }
+
     // ── Zoho SMTP HTML email ──
     if (process.env.ZOHO_SMTP_USER && process.env.ZOHO_SMTP_PASS) {
       const transporter = nodemailer.createTransport({
@@ -275,25 +320,6 @@ EMAIL: ${onb.email || '-'}
           pass: process.env.ZOHO_SMTP_PASS,
         },
       });
-
-      const summaryHtml = buildHtml(onb, eq, fields, fileNames);
-      const uploadedAttachments = attachments.map(a => ({
-        filename: a.name,
-        content: Buffer.from(a.data, 'base64'),
-        contentType: a.type || 'application/octet-stream',
-      }));
-
-      let pdfAttachment = [];
-      try {
-        const pdfBuffer = await renderHtmlToPdf(summaryHtml);
-        pdfAttachment = [{
-          filename: `Egrafi-${name.replace(/\s+/g, '_')}.pdf`,
-          content: pdfBuffer,
-          contentType: 'application/pdf',
-        }];
-      } catch (pdfErr) {
-        console.error('PDF generation error:', pdfErr);
-      }
 
       await transporter.sendMail({
         from: `"Roots of Carbon" <${process.env.ZOHO_SMTP_USER}>`,
